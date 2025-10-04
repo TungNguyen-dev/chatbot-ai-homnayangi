@@ -1,0 +1,10 @@
+Frequently Asked Questions:
+
+Q: How can I help you today?
+A: I can assist with a wide range of topics including answering questions, providing explanations, offering recommendations, and helping solve problems.
+
+Q: What are your capabilities?
+A: I can help with information retrieval, problem-solving, explanations, creative tasks, and much more. Feel free to ask me anything!
+
+Q: Can you remember our previous conversations?
+A: Yes, I maintain context within our current conversation to provide coherent and relevant responses.
