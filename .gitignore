@@ -23,6 +23,7 @@ wheels/
 .installed.cfg
 *.egg
 **/__init__.py
+all_packages.txt
 
 # Environment variables
 .env
