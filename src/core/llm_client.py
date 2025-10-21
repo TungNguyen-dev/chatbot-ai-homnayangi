@@ -1,6 +1,8 @@
 """
 LLM client wrapper for OpenAI API (or other LLM providers).
 """
+import chromadb
+from sentence_transformers import SentenceTransformer
 import json
 from typing import List, Dict, Optional
 from openai import OpenAI
@@ -62,10 +64,10 @@ class LLMClient:
             return f"I apologize, but I encountered an error: {str(e)}"
 
     def generate_response_stream(
-        self,
-        messages: List[Dict[str, str]],
-        temperature: Optional[float] = None,
-        max_tokens: Optional[int] = None,
+            self,
+            messages: List[Dict[str, str]],
+            temperature: Optional[float] = None,
+            max_tokens: Optional[int] = None,
     ):
         """
         Generate a streaming response from the LLM.
@@ -187,7 +189,28 @@ class LLMClient:
                             "required": ["location", "weather_condition"],
                         },
                     }
+                },
+                {
+                "type": "function",
+                "function": {
+                    "name": "recommend_food_detail",
+                    "description": "Recommend food detail",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "style": {
+                                "type": "string",
+                                "description": "Style extracted from user input"
+                            },
+                            "taste": {
+                                "type": "string",
+                                "description": "Taste extracted from user input"
+                            }
+                        },
+                        "required": []
+                    }
                 }
+            }
             ]
 
             stream = self.client.chat.completions.create(
@@ -225,6 +248,13 @@ class LLMClient:
                 print("Food name:", food_name)
                 print("Location:", location)
                 yield self.how_to_cook(food_name, location)
+            elif function_name == "recommend_food_detail" and arguments_buffer:
+                args = json.loads(arguments_buffer)
+                style = args.get("style")
+                taste = args.get("taste")
+                print("style:", style)
+                print("taste:", taste)
+                yield self.recommend_food_detail(style, taste)
             elif function_name == "recommend_food" and arguments_buffer:
                 args = json.loads(arguments_buffer)
                 gender = args.get("gender")
@@ -288,6 +318,56 @@ class LLMClient:
             max_tokens=self.max_tokens
         )
         return response.choices[0].message.content
+    
+    def recommend_food_detail(
+        self,
+        style: str,
+        taste: str
+    ) -> str:
+
+        print("Bat dau xu ly fuction .....")
+        # Dữ liệu mẫu
+        dishes = [
+            {"name": "Phở bò", "description": "Món nước, vị thanh, không cay"},
+            {"name": "Bún chả", "description": "Món khô, vị nướng, không cay"},
+            {"name": "Bún riêu cay", "description": "Món nước, vị cay nồng"},
+            {"name": "Cơm tấm", "description": "Món khô, không cay"},
+            {"name": "Bún đậu mắm tôm", "description": "Món khô, vị mắm, không cay"},
+            {"name": "Bún cá cay", "description": "Món nước, vị cay"},
+            {"name": "Bún riêu", "description": "Món nước, vị chua, không cay"},
+            {"name": "Soup", "description": "Món Soup, and spicy (rất cay)"},
+            {"name": "Soup", "description": "Món Soup, and Sweet (ngọt nhẹ)"},
+        ]
+
+        # Khởi tạo ChromaDB và mô hình embedding
+        client = chromadb.Client()
+        collection = client.create_collection("dishes")
+        model = SentenceTransformer('all-MiniLM-L6-v2')
+
+        # Thêm món ăn vào database, bổ sung IDs
+        for i, dish in enumerate(dishes):
+            emb = model.encode(dish["description"])
+            collection.add(
+                ids=[f"dish_{i}"],
+                documents=[dish["name"]],
+                metadatas=[{"description": dish["description"]}],
+                embeddings=[emb]
+            )
+
+        print("Bat dau tao query truy van .....")
+
+        # Nhận truy vấn từ người dùng
+        user_query = f"Today, I want to food with {style},{taste}"
+        query_emb = model.encode(user_query)
+
+        print("Bat dau tim kiem .....")
+        # Tìm kiếm món ăn phù hợp nhất
+        results = collection.query(
+            query_embeddings=[query_emb],
+            n_results=2
+        )
+        print("Ket qua: " + results['metadatas'][0][0]['description'])
+        return results['metadatas'][0][0]['description']
 
     def how_to_cook(
             self,
