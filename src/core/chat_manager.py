@@ -2,7 +2,7 @@
 High-level chat manager that orchestrates all components.
 """
 
-from typing import Optional, Generator
+from typing import Generator, Union
 from src.context.memory_manager import MemoryManager
 from src.context.embeddings import EmbeddingsManager
 from src.core.llm_client import LLMClient
@@ -18,7 +18,7 @@ class ChatManager:
         self.llm = LLMClient()
         self.prompt_builder = PromptBuilder()
 
-    def send_message(self, user_message: str, stream: bool = False) -> str:
+    def send_message(self, user_message: str, stream: bool = False) -> Union[str, Generator[str, None, None]]:
         """
         Send a user message and get a response.
 
@@ -27,7 +27,7 @@ class ChatManager:
             stream: Whether to stream the response
 
         Returns:
-            The assistant's response
+            The assistant's response (str) or a streaming generator of response chunks
         """
         # Add user message to memory
         self.memory.add_message("user", user_message)
@@ -41,6 +41,7 @@ class ChatManager:
 
         # Generate response
         if stream:
+            # Return a generator instead of string
             return self._generate_streaming_response(messages)
         else:
             response = self.llm.generate_response(messages)
@@ -48,12 +49,15 @@ class ChatManager:
             return response
 
     def _generate_streaming_response(self, messages) -> Generator[str, None, None]:
-        """Generate a streaming response."""
+        """
+        Generate a streaming response.
+        """
         full_response = ""
 
         for chunk in self.llm.generate_response_stream(messages):
-            full_response += chunk
-            yield chunk
+            if chunk:
+                yield chunk
+                full_response += chunk
 
         # Add complete response to memory after streaming
         self.memory.add_message("assistant", full_response)
@@ -69,3 +73,4 @@ class ChatManager:
     def get_context_summary(self) -> str:
         """Get a summary of the current context."""
         return self.memory.get_context_summary()
+

@@ -53,7 +53,16 @@ class EmbeddingsManager:
 
         try:
             results = self.collection.query(query_texts=[query], n_results=n_results)
-            return results.get("documents", [[]])[0]
+
+            # Ensure the query actually returned a result
+            if not results or "documents" not in results or not results["documents"]:
+                print("No documents found for the given query.")
+                return []
+
+            # Safely extract the documents list
+            return results["documents"][0] if results["documents"][0] else []
+
         except Exception as e:
             print(f"Failed to search vector DB: {e}")
             return []
+
