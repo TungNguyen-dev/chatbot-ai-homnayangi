@@ -12,3 +12,5 @@ pip install --upgrade pip setuptools wheel
 
 # 3. Install project dependencies
 pip install -r requirements.txt
+
+mkdir -p storage

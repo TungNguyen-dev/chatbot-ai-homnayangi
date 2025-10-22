@@ -2,7 +2,7 @@ from transformers import pipeline
 import numpy as np
 import soundfile as sf
 
-def text_to_speech(text, output_path="output.wav", model_name="facebook/mms-tts-vie"):
+def text_to_speech(text, output_path="storage/output.wav", model_name="facebook/mms-tts-vie"):
     try:
         # Initialize TTS model
         tts = pipeline("text-to-speech", model=model_name)
