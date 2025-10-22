@@ -312,7 +312,7 @@ class LLMClient:
             max_tokens=self.max_tokens
         )
         return response.choices[0].message.content
-    
+
     def recommend_food_detail(
         self,
         style: str,

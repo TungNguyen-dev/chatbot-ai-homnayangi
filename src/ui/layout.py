@@ -35,7 +35,7 @@ def render_sidebar():
         st.subheader("About")
         st.markdown("""
         This is an AI-powered chatbot that can help you with various tasks and questions.
-        
+
         **Features:**
         - Contextual conversations
         - Memory of chat history
