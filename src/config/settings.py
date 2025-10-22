@@ -6,8 +6,18 @@ Store API keys, model configurations, and constants here.
 import os
 from dotenv import load_dotenv
 
+# Resolve path to the project root (two levels above this file)
+BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir, os.pardir))
+
+# Define the .env file path
+ENV_PATH = os.path.join(BASE_DIR, ".env")
+
 # Load environment variables
-load_dotenv()
+if os.path.exists(ENV_PATH):
+    load_dotenv(dotenv_path=ENV_PATH)
+    print(f"✅ Environment loaded from: {ENV_PATH}")
+else:
+    print(f"⚠️  Warning: .env file not found at {ENV_PATH}")
 
 # API Configuration
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
