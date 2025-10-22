@@ -6,13 +6,7 @@ from sentence_transformers import SentenceTransformer
 import json
 from typing import List, Dict, Optional
 from openai import OpenAI
-from src.config.settings import (
-    OPENAI_API_KEY,
-    OPENAI_MODEL,
-    OPENAI_TEMPERATURE,
-    OPENAI_MAX_TOKENS,
-    OPENAI_BASE_URL,
-)
+from src.config.settings import settings
 from src.core.calling_external_api import Get_weather
 
 
@@ -20,10 +14,10 @@ class LLMClient:
     """Wrapper around OpenAI API for LLM interactions."""
 
     def __init__(self):
-        self.client = OpenAI(base_url=OPENAI_BASE_URL, api_key=OPENAI_API_KEY)
-        self.model = OPENAI_MODEL
-        self.temperature = OPENAI_TEMPERATURE
-        self.max_tokens = OPENAI_MAX_TOKENS
+        self.client = OpenAI(base_url=settings.OPENAI_BASE_URL, api_key=settings.OPENAI_API_KEY)
+        self.model = settings.OPENAI_MODEL
+        self.temperature = settings.OPENAI_TEMPERATURE
+        self.max_tokens = settings.OPENAI_MAX_TOKENS
 
     def generate_response(
         self,

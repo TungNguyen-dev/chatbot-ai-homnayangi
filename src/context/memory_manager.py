@@ -3,7 +3,7 @@ Memory manager for handling conversation context and history.
 """
 
 from typing import List, Dict
-from src.config.settings import MAX_CONTEXT_MESSAGES
+from src.config.settings import settings
 
 
 class MemoryManager:
@@ -11,7 +11,7 @@ class MemoryManager:
 
     def __init__(self):
         self.messages: List[Dict[str, str]] = []
-        self.max_messages = MAX_CONTEXT_MESSAGES
+        self.max_messages = settings.MAX_CONTEXT_MESSAGES
 
     def add_message(self, role: str, content: str):
         """Add a message to the conversation history."""

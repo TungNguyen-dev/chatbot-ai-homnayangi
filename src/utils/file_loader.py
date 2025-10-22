@@ -4,7 +4,7 @@ File loading utilities for prompts and configuration files.
 
 import os
 from typing import Optional
-from src.config.settings import PROMPTS_DIR
+from src.config.settings import settings
 
 
 def load_prompt(filename: str) -> str:
@@ -17,7 +17,7 @@ def load_prompt(filename: str) -> str:
     Returns:
         Content of the prompt file
     """
-    file_path = os.path.join(PROMPTS_DIR, filename)
+    file_path = os.path.join(settings.PROMPTS_DIR, filename)
 
     try:
         with open(file_path, "r", encoding="utf-8") as f:

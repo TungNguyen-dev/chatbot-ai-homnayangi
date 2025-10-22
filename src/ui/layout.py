@@ -3,14 +3,14 @@ Streamlit layout and UI components.
 """
 
 import streamlit as st
-from src.config.settings import APP_TITLE, APP_ICON
+from src.config.settings import settings
 
 
 def setup_page_config():
     """Configure the Streamlit page."""
     st.set_page_config(
-        page_title=APP_TITLE,
-        page_icon=APP_ICON,
+        page_title=settings.APP_TITLE,
+        page_icon=settings.APP_ICON,
         layout="wide",
         initial_sidebar_state="expanded",
     )
@@ -19,7 +19,7 @@ def setup_page_config():
 def render_sidebar():
     """Render the sidebar with controls and information."""
     with st.sidebar:
-        st.title(f"{APP_ICON} {APP_TITLE}")
+        st.title(f"{settings.APP_ICON} {settings.APP_TITLE}")
         st.markdown("---")
 
         st.subheader("Controls")
@@ -43,11 +43,11 @@ def render_sidebar():
         """)
 
         st.markdown("---")
-        st.caption(f"Powered by {APP_ICON}")
+        st.caption(f"Powered by {settings.APP_ICON}")
 
 
 def render_header():
     """Render the main header."""
-    st.title(f"{APP_ICON} {APP_TITLE}")
+    st.title(f"{settings.APP_ICON} {settings.APP_TITLE}")
     st.markdown("Ask me anything! I'm here to help.")
     st.markdown("---")

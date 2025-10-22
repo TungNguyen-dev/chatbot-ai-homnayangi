@@ -5,14 +5,14 @@ Optional: Used if you want to implement semantic search or long-term memory.
 
 from typing import List, Optional
 import chromadb
-from src.config.settings import USE_VECTOR_DB, VECTOR_DB_PATH
+from src.config.settings import settings
 
 
 class EmbeddingsManager:
     """Manages embeddings and vector database operations."""
 
     def __init__(self):
-        self.enabled = USE_VECTOR_DB
+        self.enabled = settings.USE_VECTOR_DB
         self.client = None
         self.collection = None
 
@@ -22,7 +22,7 @@ class EmbeddingsManager:
     def _initialize_db(self):
         """Initialize ChromaDB client and collection."""
         try:
-            self.client = chromadb.PersistentClient(path=VECTOR_DB_PATH)
+            self.client = chromadb.PersistentClient(path=settings.VECTOR_DB_PATH)
             self.collection = self.client.get_or_create_collection(
                 name="conversation_history"
             )
