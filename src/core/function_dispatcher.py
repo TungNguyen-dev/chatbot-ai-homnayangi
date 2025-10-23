@@ -3,9 +3,8 @@ Centralized function calling and dispatching logic for LLM tools.
 """
 
 import json
+import requests
 from typing import Dict, Generator, Optional, Any
-from src.core.calling_external_api import Get_weather
-
 
 # ============================================================
 # Tool Function Definitions
@@ -86,12 +85,20 @@ FUNCTION_DEFINITIONS = [
             },
         },
     },
+    {
+        "type": "function",
+        "function": {
+            "name": "get_current_weather",
+            "description": "Get the user's current city and temperature using free APIs.",
+            "parameters": {"type": "object", "properties": {}},
+        },
+    },
 ]
-
 
 # ============================================================
 # Dispatcher Class
 # ============================================================
+
 
 class FunctionDispatcher:
     """
@@ -137,7 +144,7 @@ class FunctionDispatcher:
         try:
             args = json.loads(arguments_buffer)
         except json.JSONDecodeError:
-            yield "Lỗi khi phân tích tham số hàm từ mô hình."
+            yield "❌ Error parsing function arguments from model."
             return
 
         handler_map = {
@@ -157,7 +164,7 @@ class FunctionDispatcher:
         if handler:
             yield handler()
         else:
-            yield f"⚠️ Function '{function_name}' chưa được hỗ trợ."
+            yield f"⚠️ Function '{function_name}' is not supported."
 
     # --------------------------------------------------------
     # Local Function Implementations
@@ -176,35 +183,74 @@ class FunctionDispatcher:
         return self._simple_llm_call(prompt)
 
     def recommend_food_detail(self, style: str, taste: str) -> str:
-        # TODO: integrate with ChromaDB logic or knowledge base
         prompt = f"Gợi ý món ăn {style} với hương vị {taste} (Vietnamese)."
         return self._simple_llm_call(prompt)
 
     def find_restaurants(self, location: Optional[str], cuisine: Optional[str] = None) -> str:
         """Find restaurants, auto-fill location if missing."""
         if not location or location.lower() == "none":
-            weather_info = Get_weather().get_location_and_weather()
+            weather_info = self.get_location_and_weather()
             if weather_info:
                 location = weather_info.get("city")
         prompt = f"Gợi ý nhà hàng {cuisine or ''} tại {location} (Vietnamese)."
         return self._simple_llm_call(prompt)
 
     # --------------------------------------------------------
+    # Utility: Weather and Location Retrieval
+    # --------------------------------------------------------
+
+    def get_location_and_weather(self) -> Optional[dict]:
+        """Get user's city and weather using public APIs."""
+        try:
+            # Step 1: Get location via IPWhois API
+            location_url = "http://ipwhois.app/json/"
+            location_response = requests.get(location_url, timeout=5)
+            location_response.raise_for_status()
+            location_data = location_response.json()
+
+            city = location_data.get("city", "Unknown")
+            district = location_data.get("region", "Unknown")
+            country = location_data.get("country_name", "Unknown")
+            lat = location_data.get("latitude")
+            lon = location_data.get("longitude")
+
+            # Step 2: Get weather from Open-Meteo
+            weather_url = (
+                f"https://api.open-meteo.com/v1/forecast"
+                f"?latitude={lat}&longitude={lon}&current_weather=true"
+            )
+            weather_response = requests.get(weather_url, timeout=5)
+            weather_response.raise_for_status()
+            weather_data = weather_response.json()
+
+            temperature = weather_data["current_weather"]["temperature"]
+
+            return {
+                "district": district,
+                "city": city,
+                "country": country,
+                "temperature": temperature,
+                "latitude": lat,
+                "longitude": lon,
+            }
+
+        except requests.exceptions.RequestException as e:
+            print(f"❌ Error fetching location/weather: {e}")
+            return None
+
+    # --------------------------------------------------------
     # Internal Helpers
     # --------------------------------------------------------
 
     def _simple_llm_call(self, prompt: str) -> str:
-        """
-        Internal helper for running a simple one-shot LLM query.
-        Kept inside dispatcher since it’s only used here.
-        """
+        """Simple single-turn LLM call."""
         response = self.llm_client._chat_completion(messages=[{"role": "user", "content": prompt}])
-        return response.choices[0].message.content
+        return response.choices[0].message.content or ""
 
     def _handle_weather(self) -> str:
-        """Fetch weather information."""
+        """Fetch weather information and return human-readable text."""
         try:
-            weather_info: Optional[Dict[str, Any]] = Get_weather().get_location_and_weather()
+            weather_info: Optional[Dict[str, Any]] = self.get_location_and_weather()
             if not weather_info:
                 return "Hiện tại không thể lấy thông tin thời tiết, vui lòng thử lại sau."
 
@@ -214,7 +260,7 @@ class FunctionDispatcher:
             if city is None or temperature is None:
                 return "Thông tin thời tiết không đầy đủ, vui lòng thử lại sau."
 
-            return f"Thời tiết ở {city} hôm nay là {temperature} độ."
+            return f"Thời tiết ở {city} hôm nay là {temperature}°C."
         except Exception:
             return "Hiện tại không thể lấy thông tin thời tiết, vui lòng thử lại sau."
 
