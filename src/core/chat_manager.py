@@ -2,7 +2,8 @@
 High-level chat manager that orchestrates all components.
 """
 
-from typing import Generator, Union
+from typing import Generator, Union, cast
+from openai.types.chat import ChatCompletionMessageParam
 from src.context.memory_manager import MemoryManager
 from src.context.embeddings import EmbeddingsManager
 from src.core.llm_client import LLMClient
@@ -39,16 +40,20 @@ class ChatManager:
         # Build messages for LLM
         messages = self.prompt_builder.build_messages(self.memory.get_messages())
 
+        # ✅ Explicitly cast to maintain type safety
+        typed_messages = cast(list[ChatCompletionMessageParam], messages)
+
         # Generate response
         if stream:
-            # Return a generator instead of string
-            return self._generate_streaming_response(messages)
+            return self._generate_streaming_response(typed_messages)
         else:
-            response = self.llm.generate_response(messages)
+            response = self.llm.generate_response(typed_messages)
             self.memory.add_message("assistant", response)
             return response
 
-    def _generate_streaming_response(self, messages) -> Generator[str, None, None]:
+    def _generate_streaming_response(
+        self, messages: list[ChatCompletionMessageParam]
+    ) -> Generator[str, None, None]:
         """
         Generate a streaming response.
         """
