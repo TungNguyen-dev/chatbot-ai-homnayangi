@@ -2,98 +2,16 @@
 Centralized function calling and dispatching logic for LLM tools.
 """
 
+# ============================================================
+# Auto-discovery of tool function handlers from src.core.functions
+# ============================================================
+import importlib
 import json
-import requests
+import pkgutil
 from typing import Dict, Generator, Optional, Any
 
-# ============================================================
-# Tool Function Definitions
-# ============================================================
+import requests
 
-FUNCTION_DEFINITIONS = [
-    {
-        "type": "function",
-        "function": {
-            "name": "how_to_cook_food",
-            "description": "Explain how to cook a specific food",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "food_name": {"type": "string"},
-                    "location": {"type": "string"},
-                },
-                "required": ["food_name"],
-            },
-        },
-    },
-    {
-        "type": "function",
-        "function": {
-            "name": "recommend_food",
-            "description": "Recommend food based on gender, location, disease, or time",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "gender": {"type": "string"},
-                    "location": {"type": "string"},
-                    "disease": {"type": "string"},
-                    "time": {"type": "string"},
-                },
-            },
-        },
-    },
-    {
-        "type": "function",
-        "function": {
-            "name": "find_restaurants",
-            "description": "Find restaurants based on cuisine and location.",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "location": {"type": "string"},
-                    "cuisine": {"type": "string"},
-                },
-            },
-        },
-    },
-    {
-        "type": "function",
-        "function": {
-            "name": "get_food_recommendation",
-            "description": "Recommend food based on location and weather.",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "location": {"type": "string"},
-                    "weather_condition": {"type": "string"},
-                },
-                "required": ["location", "weather_condition"],
-            },
-        },
-    },
-    {
-        "type": "function",
-        "function": {
-            "name": "recommend_food_detail",
-            "description": "Recommend detailed food style and taste.",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "style": {"type": "string"},
-                    "taste": {"type": "string"},
-                },
-            },
-        },
-    },
-    {
-        "type": "function",
-        "function": {
-            "name": "get_current_weather",
-            "description": "Get the user's current city and temperature using free APIs.",
-            "parameters": {"type": "object", "properties": {}},
-        },
-    },
-]
 
 # ============================================================
 # Dispatcher Class
@@ -107,6 +25,63 @@ class FunctionDispatcher:
 
     def __init__(self, llm_client):
         self.llm_client = llm_client
+        # Dynamically discover tool function handlers from src.core.functions
+        self.function_handlers = self._load_function_handlers()
+
+    def _load_function_handlers(self) -> Dict[str, Any]:
+        """
+        Auto-discover function handler modules under src.core.functions.
+        Each module is expected to expose:
+          - DEFINITION: dict with shape {"function": {"name": str, ...}}
+          - handle(dispatcher, args) -> str
+        Returns a mapping from function name to its handler callable.
+        """
+        handlers: Dict[str, Any] = {}
+        try:
+            package = importlib.import_module("src.core.functions")
+        except Exception as e:
+            print(f"⚠️ Could not import functions package: {e}")
+            return handlers
+
+        if not hasattr(package, "__path__"):
+            # Not a package, nothing to scan
+            return handlers
+
+        for module_info in pkgutil.iter_modules(package.__path__):
+            mod_name = module_info.name
+            if mod_name.startswith("_"):
+                continue
+            full_name = f"src.core.functions.{mod_name}"
+            try:
+                mod = importlib.import_module(full_name)
+            except Exception as e:
+                print(f"⚠️ Failed to import module {full_name}: {e}")
+                continue
+
+            func_name = None
+            try:
+                definition = getattr(mod, "DEFINITION", None)
+                if isinstance(definition, dict):
+                    func = definition.get("function") or {}
+                    func_name = func.get("name")
+            except Exception:
+                func_name = None
+
+            handle = getattr(mod, "handle", None)
+            if not callable(handle):
+                continue
+
+            if not func_name:
+                # Fallback to module name
+                func_name = mod_name
+
+            handlers[func_name] = handle
+
+        return handlers
+
+    def reload_function_handlers(self) -> None:
+        """Reload function handlers by rescanning the package."""
+        self.function_handlers = self._load_function_handlers()
 
     # --------------------------------------------------------
     # Stream Handler
@@ -128,7 +103,7 @@ class FunctionDispatcher:
                 if func.arguments:
                     arguments_buffer += func.arguments
 
-        # After stream ends, call the corresponding function
+        # After the stream ends, call the corresponding function
         if function_name:
             yield from self.dispatch(function_name, arguments_buffer)
 
@@ -136,33 +111,22 @@ class FunctionDispatcher:
     # Dispatcher
     # --------------------------------------------------------
 
-    def dispatch(self, function_name: Optional[str], arguments_buffer: str) -> Generator[str, None, None]:
+    def dispatch(self, function_name: Optional[str], arguments_buffer: str) -> Generator[
+        str, None, None]:
         """Dispatch correct local function after stream ends."""
-        if not function_name or not arguments_buffer:
+        if not function_name or arguments_buffer is None:
             return
 
         try:
-            args = json.loads(arguments_buffer)
+            args = json.loads(arguments_buffer) if arguments_buffer else {}
         except json.JSONDecodeError:
             yield "❌ Error parsing function arguments from model."
             return
 
-        handler_map = {
-            "how_to_cook_food": lambda: self.how_to_cook(args.get("food_name"), args.get("location")),
-            "recommend_food_detail": lambda: self.recommend_food_detail(args.get("style"), args.get("taste")),
-            "recommend_food": lambda: self.recommend_food(
-                args.get("disease"), args.get("location"), args.get("time"), args.get("gender")
-            ),
-            "get_food_recommendation": lambda: self.recommend_food_with_weather(
-                args.get("weather_condition"), args.get("location")
-            ),
-            "find_restaurants": lambda: self.find_restaurants(args.get("location"), args.get("cuisine")),
-            "get_current_weather": self._handle_weather,
-        }
-
-        handler = handler_map.get(function_name)
+        handler = self.function_handlers.get(function_name)
         if handler:
-            yield handler()
+            # Each handler expects (dispatcher, args) and returns str
+            yield handler(self, args)
         else:
             yield f"⚠️ Function '{function_name}' is not supported."
 
@@ -263,4 +227,3 @@ class FunctionDispatcher:
             return f"Thời tiết ở {city} hôm nay là {temperature}°C."
         except Exception:
             return "Hiện tại không thể lấy thông tin thời tiết, vui lòng thử lại sau."
-

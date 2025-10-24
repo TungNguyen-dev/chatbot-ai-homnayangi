@@ -3,14 +3,17 @@ LLM client wrapper for OpenAI API.
 """
 
 from typing import Optional, Generator, Union
+
 from openai import OpenAI, Stream
 from openai.types.chat import (
     ChatCompletion,
     ChatCompletionChunk,
     ChatCompletionMessageParam,
 )
+
 from src.config.settings import settings
-from src.core.function_dispatcher import FUNCTION_DEFINITIONS, FunctionDispatcher
+from src.core.function_dispatcher import FunctionDispatcher
+from src.core.functions import FUNCTION_DEFINITIONS
 
 
 class LLMClient:
@@ -31,12 +34,12 @@ class LLMClient:
     # ------------------------------
 
     def _chat_completion(
-        self,
-        messages: list[ChatCompletionMessageParam],
-        temperature: Optional[float] = None,
-        max_tokens: Optional[int] = None,
-        stream: bool = False,
-        **kwargs,
+            self,
+            messages: list[ChatCompletionMessageParam],
+            temperature: Optional[float] = None,
+            max_tokens: Optional[int] = None,
+            stream: bool = False,
+            **kwargs,
     ) -> Union[ChatCompletion, Stream[ChatCompletionChunk]]:
         """
         Low-level API call to OpenAI chat completion (OpenAI ≥1.x).
@@ -59,10 +62,10 @@ class LLMClient:
     # ------------------------------
 
     def generate_response(
-        self,
-        messages: list[ChatCompletionMessageParam],
-        temperature: Optional[float] = None,
-        max_tokens: Optional[int] = None,
+            self,
+            messages: list[ChatCompletionMessageParam],
+            temperature: Optional[float] = None,
+            max_tokens: Optional[int] = None,
     ) -> str:
         """
         Generate a full, synchronous response from the model.
@@ -85,10 +88,10 @@ class LLMClient:
             return f"Error generating response: {str(e)}"
 
     def generate_response_stream(
-        self,
-        messages: list[ChatCompletionMessageParam],
-        temperature: Optional[float] = None,
-        max_tokens: Optional[int] = None,
+            self,
+            messages: list[ChatCompletionMessageParam],
+            temperature: Optional[float] = None,
+            max_tokens: Optional[int] = None,
     ) -> Generator[str, None, None]:
         """
         Stream LLM responses and handle function/tool calls via FunctionDispatcher.
@@ -111,4 +114,3 @@ class LLMClient:
 
         except Exception as e:
             yield f"Error: {str(e)}"
-
