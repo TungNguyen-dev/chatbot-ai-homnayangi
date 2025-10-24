@@ -3,9 +3,11 @@ High-level chat manager that orchestrates all components.
 """
 
 from typing import Generator, Union, cast
+
 from openai.types.chat import ChatCompletionMessageParam
-from src.context.memory_manager import MemoryManager
+
 from src.context.embeddings import EmbeddingsManager
+from src.context.memory_manager import MemoryManager
 from src.core.llm_client import LLMClient
 from src.core.prompt_builder import PromptBuilder
 

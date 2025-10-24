@@ -1,6 +1,6 @@
-from transformers import pipeline
 import numpy as np
 import soundfile as sf
+from transformers import pipeline
 
 
 def text_to_speech(text, output_path="storage/output.wav", model_name="facebook/mms-tts-vie"):

@@ -4,7 +4,9 @@ Optional: Used if you want to implement semantic search or long-term memory.
 """
 
 from typing import List, Optional
+
 import chromadb
+
 from src.config.settings import settings
 
 

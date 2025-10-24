@@ -3,9 +3,10 @@ Main Streamlit application entry point for the chatbot.
 """
 
 import streamlit as st
-from src.ui.layout import setup_page_config
-from src.ui.chat_ui import render_chat_interface
+
 from src.core.chat_manager import ChatManager
+from src.ui.chat_ui import render_chat_interface
+from src.ui.layout import setup_page_config
 from src.utils.logger import setup_logger
 
 # Setup logger
