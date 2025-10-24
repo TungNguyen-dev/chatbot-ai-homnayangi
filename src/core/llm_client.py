@@ -12,7 +12,7 @@ from openai.types.chat import (
 )
 
 from src.config.settings import settings
-from src.core.function_dispatcher import FunctionDispatcher
+from src.core.function_registry import FunctionRegistry
 
 
 class LLMClient:
@@ -26,7 +26,7 @@ class LLMClient:
         self.model = settings.OPENAI_MODEL
         self.temperature = settings.OPENAI_TEMPERATURE
         self.max_tokens = settings.OPENAI_MAX_TOKENS
-        self.function_dispatcher = FunctionDispatcher(self)
+        self.function_registry = FunctionRegistry(self)
 
     # ------------------------------
     # Generic LLM Calls
@@ -101,13 +101,13 @@ class LLMClient:
                 temperature=temperature,
                 max_tokens=max_tokens,
                 stream=True,
-                tools=self.function_dispatcher.tool_definitions,
+                tools=self.function_registry.tool_definitions,
                 tool_choice="auto",
             )
 
             # ✅ Type guard ensures only Stream is handled
             if isinstance(stream, Stream):
-                yield from self.function_dispatcher.handle_stream(stream)
+                yield from self.function_registry.handle_stream(stream)
             else:
                 yield "Error: Expected streaming response but got full completion."
 

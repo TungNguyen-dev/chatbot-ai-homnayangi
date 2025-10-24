@@ -1,5 +1,8 @@
 """
-Centralized function calling and dispatching logic for LLM tools.
+Central registry for discovering, managing, and dispatching LLM tool functions.
+
+Automatically scans packages for tool modules, extracts OpenAI-style DEFINITION
+metadata, registers callable handlers, and dispatches tool calls from model outputs.
 """
 
 import importlib
@@ -12,7 +15,7 @@ from typing import Dict, Generator, Optional, Any, List, Callable, Iterable
 logger = logging.getLogger(__name__)
 
 
-class FunctionDispatcher:
+class FunctionRegistry:
     """
     Handles parsing of tool calls, business logic, and LLM prompt utilities.
     Also, responsible for discovering tool function handlers and OpenAI tool
@@ -136,7 +139,7 @@ class FunctionDispatcher:
     def handle_stream(self, stream) -> Generator[str, None, None]:
         """
         Parse stream chunks and handle both text and function calls.
-    
+
         Collects model-generated text incrementally and detects any function calls
         returned by the model. After streaming ends, dispatches the function call.
         """
