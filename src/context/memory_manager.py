@@ -31,7 +31,7 @@ class MemoryManager:
 
             # Keep most recent messages
             other_messages = other_messages[
-                -(self.max_messages - len(system_messages)) :
+                -(self.max_messages - len(system_messages)):
             ]
             self.messages = system_messages + other_messages
 

@@ -20,7 +20,7 @@ class PromptBuilder:
         return f"{chatbot_role}\n\n{persona}"
 
     def build_system_message(
-        self, additional_context: Optional[str] = None
+            self, additional_context: Optional[str] = None
     ) -> Dict[str, str]:
         """
         Build the system message with optional additional context.
@@ -39,9 +39,9 @@ class PromptBuilder:
         return {"role": "system", "content": content}
 
     def build_messages(
-        self,
-        conversation_history: List[Dict[str, str]],
-        additional_context: Optional[str] = None,
+            self,
+            conversation_history: List[Dict[str, str]],
+            additional_context: Optional[str] = None,
     ) -> List[Dict[str, str]]:
         """
         Build complete message list for the LLM.

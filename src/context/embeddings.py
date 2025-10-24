@@ -31,7 +31,7 @@ class EmbeddingsManager:
             self.enabled = False
 
     def add_text(
-        self, text: str, metadata: Optional[dict] = None, doc_id: Optional[str] = None
+            self, text: str, metadata: Optional[dict] = None, doc_id: Optional[str] = None
     ):
         """Add text to the vector database."""
         if not self.enabled or not self.collection:
@@ -65,4 +65,3 @@ class EmbeddingsManager:
         except Exception as e:
             print(f"Failed to search vector DB: {e}")
             return []
-

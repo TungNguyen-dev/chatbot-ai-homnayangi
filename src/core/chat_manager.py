@@ -19,7 +19,8 @@ class ChatManager:
         self.llm = LLMClient()
         self.prompt_builder = PromptBuilder()
 
-    def send_message(self, user_message: str, stream: bool = False) -> Union[str, Generator[str, None, None]]:
+    def send_message(self, user_message: str, stream: bool = False) -> Union[
+        str, Generator[str, None, None]]:
         """
         Send a user message and get a response.
 
@@ -52,7 +53,7 @@ class ChatManager:
             return response
 
     def _generate_streaming_response(
-        self, messages: list[ChatCompletionMessageParam]
+            self, messages: list[ChatCompletionMessageParam]
     ) -> Generator[str, None, None]:
         """
         Generate a streaming response.
@@ -78,4 +79,3 @@ class ChatManager:
     def get_context_summary(self) -> str:
         """Get a summary of the current context."""
         return self.memory.get_context_summary()
-

@@ -2,6 +2,7 @@ from transformers import pipeline
 import numpy as np
 import soundfile as sf
 
+
 def text_to_speech(text, output_path="storage/output.wav", model_name="facebook/mms-tts-vie"):
     try:
         # Initialize TTS model
@@ -45,4 +46,3 @@ def text_to_speech(text, output_path="storage/output.wav", model_name="facebook/
     except Exception as e:
         print(f"❌ Lỗi TTS: {e}")
         return None
-
