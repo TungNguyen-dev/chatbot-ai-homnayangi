@@ -33,7 +33,7 @@ class ChatManager:
         Returns:
             The assistant's response (str) or a streaming generator of response chunks
         """
-        # Add user message to memory
+        # Add the user message to memory
         self.memory.add_message("user", user_message)
 
         # Optionally add to vector DB for long-term memory
@@ -44,7 +44,7 @@ class ChatManager:
         messages = self.prompt_builder.build_messages(self.memory.get_messages())
 
         # ✅ Explicitly cast to maintain type safety
-        typed_messages = cast(list[ChatCompletionMessageParam], messages)
+        typed_messages = cast(list[ChatCompletionMessageParam], cast(object, messages))
 
         # Generate response
         if stream:
@@ -67,7 +67,7 @@ class ChatManager:
                 yield chunk
                 full_response += chunk
 
-        # Add complete response to memory after streaming
+        # Add a complete response to memory after streaming
         self.memory.add_message("assistant", full_response)
 
     def get_conversation_history(self):

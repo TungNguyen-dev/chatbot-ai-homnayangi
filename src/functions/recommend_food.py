@@ -17,6 +17,14 @@ DEFINITION = {
 
 
 def handle(dispatcher, args: dict) -> str:
-    return dispatcher.recommend_food(
-        args.get("disease"), args.get("location"), args.get("time"), args.get("gender")
+    disease = args.get("disease")
+    location = args.get("location")
+    time = args.get("time")
+    gender = args.get("gender")
+    prompt = (
+        f"Recommend dishes for {disease}, {location}, {time}, {gender} (Vietnamese)."
     )
+    response = dispatcher.llm_client._chat_completion(
+        messages=[{"role": "user", "content": prompt}]
+    )
+    return response.choices[0].message.content or ""

@@ -38,7 +38,7 @@ def render_chat_interface(chat_manager: "ChatManager"):
 
     # Chat input
     if prompt := st.chat_input("Type your message here..."):
-        # Add user message to UI
+        # Add the user message to UI
         st.session_state.messages.append({"role": "user", "content": prompt})
         with st.chat_message("user"):
             st.markdown(prompt)

@@ -30,7 +30,7 @@ class MemoryManager:
             system_messages = [m for m in self.messages if m["role"] == "system"]
             other_messages = [m for m in self.messages if m["role"] != "system"]
 
-            # Keep most recent messages
+            # Keep the most recent messages
             other_messages = other_messages[
                 -(self.max_messages - len(system_messages)):
             ]

@@ -2,228 +2,217 @@
 Centralized function calling and dispatching logic for LLM tools.
 """
 
-# ============================================================
-# Auto-discovery of tool function handlers from src.core.functions
-# ============================================================
 import importlib
 import json
+import logging
 import pkgutil
-from typing import Dict, Generator, Optional, Any
+from types import ModuleType
+from typing import Dict, Generator, Optional, Any, List, Callable, Iterable
 
-import requests
-
-
-# ============================================================
-# Dispatcher Class
-# ============================================================
+logger = logging.getLogger(__name__)
 
 
 class FunctionDispatcher:
     """
     Handles parsing of tool calls, business logic, and LLM prompt utilities.
+    Also, responsible for discovering tool function handlers and OpenAI tool
+    definitions (DEFINITION) exposed by function modules.
     """
 
-    def __init__(self, llm_client):
+    PREFERRED_PACKAGE = "src.functions"
+    LEGACY_PACKAGE = "src.core.functions"
+
+    def __init__(self, llm_client: Any) -> None:
         self.llm_client = llm_client
-        # Dynamically discover tool function handlers from src.core.functions
-        self.function_handlers = self._load_function_handlers()
+        self.function_handlers: Dict[str, Callable[[Any, dict], str]] = {}
+        self.tool_definitions: List[dict] = []
+        self.reload_function_handlers()
 
-    def _load_function_handlers(self) -> Dict[str, Any]:
-        """
-        Auto-discover function handler modules under src.core.functions.
-        Each module is expected to expose:
-          - DEFINITION: dict with shape {"function": {"name": str, ...}}
-          - handle(dispatcher, args) -> str
-        Returns a mapping from function name to its handler callable.
-        """
-        handlers: Dict[str, Any] = {}
+    # --------------------------------------------------------
+    # Module Discovery
+    # --------------------------------------------------------
+
+    @staticmethod
+    def _iter_modules_in_package(package_name: str) -> Generator[ModuleType, None, None]:
+        """Yield imported modules for all children within a package, safely."""
         try:
-            package = importlib.import_module("src.core.functions")
-        except Exception as e:
-            print(f"⚠️ Could not import functions package: {e}")
-            return handlers
+            package = importlib.import_module(package_name)
+        except ModuleNotFoundError:
+            logger.warning("Package '%s' not found.", package_name)
+            return
+        except ImportError as exc:
+            logger.error("Failed to import package '%s': %s", package_name, exc)
+            return
 
-        if not hasattr(package, "__path__"):
-            # Not a package, nothing to scan
-            return handlers
+        package_path = getattr(package, "__path__", None)
+        if not package_path:
+            logger.debug("Package '%s' has no __path__, skipping.", package_name)
+            return
 
-        for module_info in pkgutil.iter_modules(package.__path__):
-            mod_name = module_info.name
-            if mod_name.startswith("_"):
+        for module_info in pkgutil.iter_modules(package_path):
+            if module_info.name.startswith("_"):
                 continue
-            full_name = f"src.core.functions.{mod_name}"
+
+            full_name = f"{package_name}.{module_info.name}"
             try:
-                mod = importlib.import_module(full_name)
-            except Exception as e:
-                print(f"⚠️ Failed to import module {full_name}: {e}")
-                continue
+                yield importlib.import_module(full_name)
+            except ModuleNotFoundError:
+                logger.warning("Module '%s' not found.", full_name)
+            except ImportError as exc:
+                logger.error("Error importing module '%s': %s", full_name, exc)
 
-            func_name = None
-            try:
-                definition = getattr(mod, "DEFINITION", None)
-                if isinstance(definition, dict):
-                    func = definition.get("function") or {}
-                    func_name = func.get("name")
-            except Exception:
-                func_name = None
+    # --------------------------------------------------------
+    # Function Handler Loading
+    # --------------------------------------------------------
 
-            handle = getattr(mod, "handle", None)
-            if not callable(handle):
-                continue
+    def _load_function_handlers(self) -> Dict[str, Callable]:
+        """Auto-discover function handler modules and build handler map."""
+        handlers: Dict[str, Callable] = {}
 
-            if not func_name:
-                # Fallback to module name
-                func_name = mod_name
+        def load_from_package(package_name: str, override_existing: bool) -> None:
+            for mod in self._iter_modules_in_package(package_name):
+                try:
+                    definition = getattr(mod, "DEFINITION", None)
+                    handle = getattr(mod, "handle", None)
+                except AttributeError:
+                    logger.debug("Module '%s' missing attributes.", mod.__name__)
+                    continue
 
-            handlers[func_name] = handle
+                if not callable(handle):
+                    logger.debug("Module '%s' has no callable 'handle'.", mod.__name__)
+                    continue
+
+                func_name = (
+                                    isinstance(definition, dict)
+                                    and definition.get("function", {}).get("name")
+                            ) or mod.__name__.rsplit(".", 1)[-1]
+
+                if func_name and (override_existing or func_name not in handlers):
+                    handlers[func_name] = handle
+                    logger.debug("Registered handler '%s' from %s.", func_name, mod.__name__)
+
+        # Preferred package has higher priority
+        load_from_package(self.PREFERRED_PACKAGE, override_existing=True)
+        load_from_package(self.LEGACY_PACKAGE, override_existing=False)
 
         return handlers
 
+    # --------------------------------------------------------
+    # Tool Definition Collection
+    # --------------------------------------------------------
+
+    def _collect_tool_definitions(self) -> List[dict]:
+        """Collect DEFINITION dicts from discovered modules."""
+        definitions: List[dict] = []
+
+        def extract_definitions(package_name: str) -> None:
+            for mod in self._iter_modules_in_package(package_name):
+                definition = getattr(mod, "DEFINITION", None)
+                if not isinstance(definition, dict):
+                    continue
+
+                func = definition.get("function")
+                if isinstance(func, dict) and isinstance(func.get("name"), str):
+                    definitions.append(definition)
+
+        extract_definitions(self.PREFERRED_PACKAGE)
+        extract_definitions(self.LEGACY_PACKAGE)
+
+        return definitions
+
+    # --------------------------------------------------------
+    # Reload
+    # --------------------------------------------------------
+
     def reload_function_handlers(self) -> None:
-        """Reload function handlers by rescanning the package."""
+        """Reload function handlers and tool definitions by rescanning packages."""
         self.function_handlers = self._load_function_handlers()
+        self.tool_definitions = self._collect_tool_definitions()
 
     # --------------------------------------------------------
     # Stream Handler
     # --------------------------------------------------------
 
     def handle_stream(self, stream) -> Generator[str, None, None]:
-        """Parse stream chunks and handle both text and function calls."""
-        arguments_buffer, function_name = "", None
+        """
+        Parse stream chunks and handle both text and function calls.
+    
+        Collects model-generated text incrementally and detects any function calls
+        returned by the model. After streaming ends, dispatches the function call.
+        """
+        buffer_parts: List[str] = []
+        function_name: Optional[str] = None
 
         for chunk in stream:
             delta = chunk.choices[0].delta
-            if delta.content:
+
+            # Yield normal content chunks immediately
+            if getattr(delta, "content", None):
                 yield delta.content
-            elif delta.tool_calls:
+                continue
+
+            # Handle tool (function) call events
+            if getattr(delta, "tool_calls", None):
                 tool_call = delta.tool_calls[0]
-                func = tool_call.function
-                if func.name:
+                func = getattr(tool_call, "function", None)
+                if not func:
+                    continue
+
+                if getattr(func, "name", None):
                     function_name = func.name
-                if func.arguments:
-                    arguments_buffer += func.arguments
 
-        # After the stream ends, call the corresponding function
+                if getattr(func, "arguments", None):
+                    buffer_parts.append(func.arguments)
+
+        # Dispatch the accumulated function call (if any)
         if function_name:
-            yield from self.dispatch(function_name, arguments_buffer)
+            yield from self.dispatch(function_name, "".join(buffer_parts))
 
     # --------------------------------------------------------
-    # Dispatcher
+    # Function Dispatch
     # --------------------------------------------------------
 
-    def dispatch(self, function_name: Optional[str], arguments_buffer: str) -> Generator[
-        str, None, None]:
-        """Dispatch correct local function after stream ends."""
-        if not function_name or arguments_buffer is None:
-            return
+    def dispatch(self, function_name: str, arguments_buffer: str) -> Generator[str, None, None]:
+        """
+        Dispatch a function call to the corresponding handler.
 
-        try:
-            args = json.loads(arguments_buffer) if arguments_buffer else {}
-        except json.JSONDecodeError:
-            yield "❌ Error parsing function arguments from model."
-            return
+        Parses JSON arguments, calls the correct handler, and yields the result.
+        """
+        logger.info("Dispatching function call: %s", function_name)
 
         handler = self.function_handlers.get(function_name)
-        if handler:
-            # Each handler expects (dispatcher, args) and returns str
-            yield handler(self, args)
+        if handler is None:
+            msg = f"⚠️ Function '{function_name}' not found among registered handlers."
+            logger.warning(msg)
+            yield msg
+            return
+
+        try:
+            args = json.loads(arguments_buffer or "{}")
+            if not isinstance(args, dict):
+                raise ValueError("Parsed arguments must be a JSON object.")
+        except Exception as exc:
+            msg = f"❌ Failed to parse arguments for '{function_name}': {exc}"
+            logger.error(msg)
+            yield msg
+            return
+
+        try:
+            logger.debug("Executing handler '%s' with args: %s", function_name, args)
+            result: Any = handler(self.llm_client, args)
+        except Exception as exc:
+            msg = f"❌ Error executing function '{function_name}': {exc}"
+            logger.exception(msg)
+            yield msg
+            return
+
+        # Normalize result and yield appropriately
+        if result is None:
+            yield f"✅ Function '{function_name}' executed successfully (no return value)."
+        elif isinstance(result, str):
+            yield result
+        elif isinstance(result, Iterable) and not isinstance(result, (str, bytes)):
+            for chunk in result:
+                yield str(chunk)
         else:
-            yield f"⚠️ Function '{function_name}' is not supported."
-
-    # --------------------------------------------------------
-    # Local Function Implementations
-    # --------------------------------------------------------
-
-    def recommend_food(self, disease: str, location: str, time: str, gender: str) -> str:
-        prompt = f"Recommend dishes for {disease}, {location}, {time}, {gender} (Vietnamese)."
-        return self._simple_llm_call(prompt)
-
-    def how_to_cook(self, food_name: str, location: str) -> str:
-        prompt = f"Briefly explain how {food_name} is prepared in {location} (Vietnamese, ≤5 lines)."
-        return self._simple_llm_call(prompt)
-
-    def recommend_food_with_weather(self, weather_temp: str, location: str) -> str:
-        prompt = f"Gợi ý món ăn ngon ở {location} dựa trên cảm giác khi trời {weather_temp} độ C."
-        return self._simple_llm_call(prompt)
-
-    def recommend_food_detail(self, style: str, taste: str) -> str:
-        prompt = f"Gợi ý món ăn {style} với hương vị {taste} (Vietnamese)."
-        return self._simple_llm_call(prompt)
-
-    def find_restaurants(self, location: Optional[str], cuisine: Optional[str] = None) -> str:
-        """Find restaurants, auto-fill location if missing."""
-        if not location or location.lower() == "none":
-            weather_info = self.get_location_and_weather()
-            if weather_info:
-                location = weather_info.get("city")
-        prompt = f"Gợi ý nhà hàng {cuisine or ''} tại {location} (Vietnamese)."
-        return self._simple_llm_call(prompt)
-
-    # --------------------------------------------------------
-    # Utility: Weather and Location Retrieval
-    # --------------------------------------------------------
-
-    def get_location_and_weather(self) -> Optional[dict]:
-        """Get user's city and weather using public APIs."""
-        try:
-            # Step 1: Get location via IPWhois API
-            location_url = "http://ipwhois.app/json/"
-            location_response = requests.get(location_url, timeout=5)
-            location_response.raise_for_status()
-            location_data = location_response.json()
-
-            city = location_data.get("city", "Unknown")
-            district = location_data.get("region", "Unknown")
-            country = location_data.get("country_name", "Unknown")
-            lat = location_data.get("latitude")
-            lon = location_data.get("longitude")
-
-            # Step 2: Get weather from Open-Meteo
-            weather_url = (
-                f"https://api.open-meteo.com/v1/forecast"
-                f"?latitude={lat}&longitude={lon}&current_weather=true"
-            )
-            weather_response = requests.get(weather_url, timeout=5)
-            weather_response.raise_for_status()
-            weather_data = weather_response.json()
-
-            temperature = weather_data["current_weather"]["temperature"]
-
-            return {
-                "district": district,
-                "city": city,
-                "country": country,
-                "temperature": temperature,
-                "latitude": lat,
-                "longitude": lon,
-            }
-
-        except requests.exceptions.RequestException as e:
-            print(f"❌ Error fetching location/weather: {e}")
-            return None
-
-    # --------------------------------------------------------
-    # Internal Helpers
-    # --------------------------------------------------------
-
-    def _simple_llm_call(self, prompt: str) -> str:
-        """Simple single-turn LLM call."""
-        response = self.llm_client._chat_completion(messages=[{"role": "user", "content": prompt}])
-        return response.choices[0].message.content or ""
-
-    def _handle_weather(self) -> str:
-        """Fetch weather information and return human-readable text."""
-        try:
-            weather_info: Optional[Dict[str, Any]] = self.get_location_and_weather()
-            if not weather_info:
-                return "Hiện tại không thể lấy thông tin thời tiết, vui lòng thử lại sau."
-
-            city = weather_info.get("city")
-            temperature = weather_info.get("temperature")
-
-            if city is None or temperature is None:
-                return "Thông tin thời tiết không đầy đủ, vui lòng thử lại sau."
-
-            return f"Thời tiết ở {city} hôm nay là {temperature}°C."
-        except Exception:
-            return "Hiện tại không thể lấy thông tin thời tiết, vui lòng thử lại sau."
+            yield str(result)

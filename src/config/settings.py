@@ -12,7 +12,7 @@ class Settings:
     """Configuration settings for the chatbot application."""
 
     def __init__(self):
-        # Resolve path to the project root (two levels above this file)
+        # Resolve the path to the project root (two levels above this file)
         self.BASE_DIR = os.path.abspath(
             os.path.join(os.path.dirname(__file__), os.pardir, os.pardir)
         )

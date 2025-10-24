@@ -61,7 +61,7 @@ class EmbeddingsManager:
                 print("No documents found for the given query.")
                 return []
 
-            # Safely extract the documents list
+            # Safely extract the document list
             return results["documents"][0] if results["documents"][0] else []
 
         except Exception as e:
