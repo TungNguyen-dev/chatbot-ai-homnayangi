@@ -109,7 +109,7 @@ class LLMClient:
 
             # ✅ Type guard ensures only Stream is handled
             if isinstance(stream, Stream):
-                yield from self.function_registry.handle_stream(stream)
+                yield from self.function_registry.handle_stream(stream, messages)
             else:
                 yield "Error: Expected streaming response but got full completion."
 
