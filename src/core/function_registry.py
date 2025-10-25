@@ -190,10 +190,43 @@ class FunctionRegistry:
             yield msg
             return
 
-        try:
-            args = json.loads(arguments_buffer or "{}")
-            if not isinstance(args, dict):
+        # Parse arguments_buffer robustly because streamed tool arguments can arrive
+        # as multiple concatenated JSON fragments or with trailing data.
+        def _parse_args(buffer: str) -> Dict[str, Any]:
+            s = (buffer or "").strip()
+            if not s:
+                return {}
+            # First, try the fast path
+            try:
+                obj = json.loads(s)
+                if isinstance(obj, dict):
+                    return obj
                 raise ValueError("Parsed arguments must be a JSON object.")
+            except Exception:
+                # Fallback: incrementally decode and take the last complete JSON object
+                decoder = json.JSONDecoder()
+                idx = 0
+                last_obj: Optional[Any] = None
+                # Allow comma separators between objects just in case
+                while idx < len(s):
+                    # Skip whitespace and commas
+                    while idx < len(s) and s[idx] in " \t\r\n,":
+                        idx += 1
+                    if idx >= len(s):
+                        break
+                    try:
+                        obj, end = decoder.raw_decode(s, idx)
+                        last_obj = obj
+                        idx = end
+                    except json.JSONDecodeError:
+                        # If we cannot decode further, stop
+                        break
+                if isinstance(last_obj, dict):
+                    return last_obj
+                raise ValueError("Could not extract a JSON object from streamed arguments.")
+
+        try:
+            args = _parse_args(arguments_buffer)
         except Exception as exc:
             msg = f"❌ Failed to parse arguments for '{function_name}': {exc}"
             logger.error(msg)
