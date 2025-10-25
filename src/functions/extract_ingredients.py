@@ -1,6 +1,6 @@
 """
 Enhanced ingredient extraction module using hybrid RAG approach.
-- Step 1: Extract candidate ingredients via Hugging Face NER model
+- Step 1: Extract candidate ingredients via OpenAI LLM
 - Step 2: Validate and enrich using ChromaDB vector retrieval
 - Step 3: Optionally refine/normalize via OpenAI LLM
 
@@ -15,8 +15,6 @@ from typing import Any, Iterable, List, Optional
 
 import chromadb
 from sentence_transformers import SentenceTransformer
-from transformers import pipeline
-from transformers.pipelines import TokenClassificationPipeline
 
 # ------------------------------------------------------
 # Function Definition
@@ -26,7 +24,7 @@ DEFINITION = {
     "function": {
         "name": "extract_ingredients",
         "description": (
-            "Extracts and validates food ingredients from user text using NER, "
+            "Extracts and validates food ingredients from user text using OpenAI LLM extraction, "
             "vector retrieval (ChromaDB), and optional LLM refinement."
         ),
         "parameters": {
@@ -45,21 +43,9 @@ DEFINITION = {
 # ------------------------------------------------------
 # Lazy getters for heavy resources
 # ------------------------------------------------------
-_ner_pipeline: Optional[TokenClassificationPipeline] = None
 _embedding_model: Optional[SentenceTransformer] = None
 _chroma_client: Optional[Any] = None
 _ingredient_collection: Optional[Any] = None
-
-
-def get_ner_pipeline():
-    global _ner_pipeline
-    if _ner_pipeline is None:
-        _ner_pipeline = pipeline(
-            "token-classification",
-            model="fran-martinez/food-ner",
-            aggregation_strategy="simple",
-        )
-    return _ner_pipeline
 
 
 def get_embedding_model() -> SentenceTransformer:
@@ -150,15 +136,30 @@ def handle(llm_client, args: dict) -> List[str]:
     if not query or not isinstance(query, str):
         return []
 
-    # --- Step 1: NER extraction ---
-    ner = get_ner_pipeline()
-    entities = ner(query)
-    raw_ingredients = [
-        (e.get("word") or "").strip().lower()
-        for e in entities
-        if (e.get("entity_group") == "FOOD") and e.get("word")
-    ]
-    raw_ingredients = _dedupe_preserve_order(raw_ingredients)
+    # --- Step 1: Extract candidate ingredients via OpenAI ---
+    raw_ingredients: List[str] = []
+    if llm_client is not None:
+        system_prompt = (
+            "You are an assistant that extracts food ingredients from text. "
+            "Return only a comma-separated list of ingredient names, no extra words. "
+            "Use singular, common names (e.g., 'tomato', 'olive oil')."
+        )
+        user_prompt = (
+            "Extract the ingredients mentioned in the following text. "
+            "If none, return an empty string.\n\n" + query
+        )
+        try:
+            resp = llm_client._chat_completion(
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt},
+                ]
+            )
+            content = (resp.choices[0].message.content or "").strip()
+            raw_ingredients = [s.strip().lower() for s in content.split(",") if s.strip()]
+            raw_ingredients = _dedupe_preserve_order(raw_ingredients)
+        except Exception:
+            raw_ingredients = []
 
     if not raw_ingredients:
         return []
