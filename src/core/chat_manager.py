@@ -40,8 +40,26 @@ class ChatManager:
         if self.embeddings.enabled:
             self.embeddings.add_text(user_message, metadata={"role": "user"})
 
+        # 🆕 3️⃣ Truy vấn vector DB xem có món nào phù hợp với câu hỏi hoặc sở thích không
+        similar_items = []
+        if self.embeddings.enabled:
+            similar_items = self.embeddings.search_similar(user_message, n_results=3)
+
+        # 🆕 4️⃣ Nếu có kết quả, tạo đoạn context để AI dùng
+        context_info = ""
+        if similar_items:
+            context_info = (
+                "Dưới đây là một vài món ăn bạn có thể cân nhắc (ưu tiên theo sở thích của người dùng):\n"
+                + "\n".join(f"- {item}" for item in similar_items)
+            )
+        print(context_info)
+
         # Build messages for LLM
         messages = self.prompt_builder.build_messages(self.memory.get_messages())
+
+        # Thêm 1 tin nhắn “system” mới chứa gợi ý món ăn gần nhất
+        if context_info:
+            messages.insert(1, {"role": "system", "content": context_info})
 
         # ✅ Explicitly cast to maintain type safety
         typed_messages = cast(list[ChatCompletionMessageParam], cast(object, messages))
