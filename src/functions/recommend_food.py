@@ -16,7 +16,7 @@ DEFINITION = {
 }
 
 
-def handle(dispatcher, args: dict) -> str:
+def handle(llm_client, args: dict) -> str:
     disease = args.get("disease")
     location = args.get("location")
     time = args.get("time")
@@ -24,7 +24,7 @@ def handle(dispatcher, args: dict) -> str:
     prompt = (
         f"Recommend dishes for {disease}, {location}, {time}, {gender} (Vietnamese)."
     )
-    response = dispatcher.llm_client._chat_completion(
+    response = llm_client._chat_completion(
         messages=[{"role": "user", "content": prompt}]
     )
     return response.choices[0].message.content or ""

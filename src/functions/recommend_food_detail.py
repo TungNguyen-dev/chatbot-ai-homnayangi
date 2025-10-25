@@ -14,11 +14,11 @@ DEFINITION = {
 }
 
 
-def handle(dispatcher, args: dict) -> str:
+def handle(llm_client, args: dict) -> str:
     style = args.get("style")
     taste = args.get("taste")
     prompt = f"Gợi ý món ăn {style} với hương vị {taste} (Vietnamese)."
-    response = dispatcher.llm_client._chat_completion(
+    response = llm_client._chat_completion(
         messages=[{"role": "user", "content": prompt}]
     )
     return response.choices[0].message.content or ""
