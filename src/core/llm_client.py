@@ -4,7 +4,8 @@ LLM client wrapper for OpenAI API.
 
 from typing import Optional, Generator, Union
 
-from openai import OpenAI, Stream, OpenAIError, APIError, RateLimitError, APIConnectionError, APITimeoutError, AuthenticationError
+from openai import OpenAI, Stream, APIError, RateLimitError, APIConnectionError, \
+    APITimeoutError, AuthenticationError
 from openai.types.chat import (
     ChatCompletion,
     ChatCompletionChunk,
@@ -53,7 +54,8 @@ class LLMClient:
                 stream=stream,
                 **kwargs,
             )
-        except (RateLimitError, APITimeoutError, APIConnectionError, AuthenticationError, APIError) as e:
+        except (RateLimitError, APITimeoutError, APIConnectionError, AuthenticationError,
+                APIError) as e:
             raise RuntimeError(f"OpenAI chat completion failed: {e}")
 
     # ------------------------------

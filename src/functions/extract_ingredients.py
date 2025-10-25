@@ -11,11 +11,12 @@ Optimizations:
 - Safer optional LLM refinement and better edge-case handling.
 """
 
-from typing import List, Iterable, Optional
+from typing import Any, Iterable, List, Optional
 
 import chromadb
 from sentence_transformers import SentenceTransformer
 from transformers import pipeline
+from transformers.pipelines import TokenClassificationPipeline
 
 # ------------------------------------------------------
 # Function Definition
@@ -44,10 +45,10 @@ DEFINITION = {
 # ------------------------------------------------------
 # Lazy getters for heavy resources
 # ------------------------------------------------------
-_ner_pipeline = None  # type: ignore
-_embedding_model = None  # type: Optional[SentenceTransformer]
-_chroma_client = None  # type: Optional[chromadb.PersistentClient]
-_ingredient_collection = None  # type: ignore
+_ner_pipeline: Optional[TokenClassificationPipeline] = None
+_embedding_model: Optional[SentenceTransformer] = None
+_chroma_client: Optional[Any] = None
+_ingredient_collection: Optional[Any] = None
 
 
 def get_ner_pipeline():
