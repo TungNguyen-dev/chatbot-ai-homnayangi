@@ -59,7 +59,7 @@ def get_ingredient_collection():
     """Create or retrieve the Chroma collection and seed a small KB on first use."""
     global _chroma_client, _ingredient_collection
     if _ingredient_collection is None:
-        _chroma_client = chromadb.PersistentClient(path="./chroma_store")
+        _chroma_client = chromadb.PersistentClient(path="./chroma_db")
         _ingredient_collection = _chroma_client.get_or_create_collection(name="ingredients")
         # Seed with a small base if empty
         if _ingredient_collection.count() == 0:
@@ -145,8 +145,8 @@ def handle(llm_client, args: dict) -> List[str]:
             "Use singular, common names (e.g., 'tomato', 'olive oil')."
         )
         user_prompt = (
-            "Extract the ingredients mentioned in the following text. "
-            "If none, return an empty string.\n\n" + query
+                "Extract the ingredients mentioned in the following text. "
+                "If none, return an empty string.\n\n" + query
         )
         try:
             resp = llm_client._chat_completion(
@@ -163,25 +163,39 @@ def handle(llm_client, args: dict) -> List[str]:
 
     if not raw_ingredients:
         return []
+    print(f"Raw ingredients: {', '.join(raw_ingredients)}")
 
     # --- Step 2: Vector-based validation (ChromaDB RAG step) ---
     validated_ingredients = _retrieve_similar_ingredients(raw_ingredients)
+    print(f"Detected ingredients: {', '.join(validated_ingredients)}")
 
     # --- Step 3: Optional LLM refinement ---
     if refine and llm_client is not None:
         detected = validated_ingredients if validated_ingredients else raw_ingredients
+        print(f"Detected ingredients (refined): {', '.join(detected)}")
         prompt = (
-            "You are a food ingredient normalization assistant.\n"
-            "Given a user query and a list of detected ingredients, "
-            "produce a clean, comma-separated list of valid ingredient names.\n\n"
-            f"User query: {query}\n"
-            f"Detected ingredients: {', '.join(detected)}\n\n"
-            "Response:"
+            "# === Vietnamese Ingredient Extraction Prompt ===\n"
+            "# Description:\n"
+            "#   Given a free-form user query, identify all valid food ingredients "
+            "#   that could realistically be used in Vietnamese or Asian cooking.\n"
+            "# Goal:\n"
+            "#   Return only ingredient names (in Vietnamese), separated by commas.\n"
+            "# Output Format:\n"
+            "#   - A single line string of ingredients, separated by ', '.\n"
+            "#   - Do NOT include explanations, titles, or extra words.\n"
+            "#   - Example output: 'gà, tỏi, ớt'\n"
+            "# ==============================================================\n\n"
+            "You are a Vietnamese food ingredient extraction assistant.\n"
+            "Given a user's message, extract and return only the list of valid ingredient names.\n\n"
+            f"User query: {query}\n\n"
+            "Return only the ingredient names, separated by commas."
         )
         try:
             response = llm_client._chat_completion(messages=[{"role": "user", "content": prompt}])
             text = (response.choices[0].message.content or "").strip()
+            print(f"Refined ingredients: {text}")
             final = [i.strip().lower() for i in text.split(",") if i.strip()]
+            print(f"Refined ingredients (deduped): {', '.join(final)}")
             return _dedupe_preserve_order(final)
         except (RuntimeError, AttributeError, IndexError, ValueError):
             # Fallback to non-refined if the LLM call fails or a response format is unexpected

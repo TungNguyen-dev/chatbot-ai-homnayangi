@@ -55,9 +55,9 @@ def render_chat_interface(chat_manager: "ChatManager"):
 
             message_placeholder.markdown(full_response)
 
-            if full_response.strip():
-                audio_file = text_to_speech(full_response)
-                st.audio(audio_file, format="audio/wav")
+            # if full_response.strip():
+            #     audio_file = text_to_speech(full_response)
+            #     st.audio(audio_file, format="audio/wav")
 
         # Add assistant response to UI
         st.session_state.messages.append(

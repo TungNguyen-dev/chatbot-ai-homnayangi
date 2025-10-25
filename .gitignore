@@ -38,6 +38,7 @@ all_packages.txt
 
 # ChromaDB
 chroma_db/
+chroma_store/
 
 # Streamlit
 .streamlit/

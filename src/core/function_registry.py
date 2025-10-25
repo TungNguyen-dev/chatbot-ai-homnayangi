@@ -182,6 +182,7 @@ class FunctionRegistry:
         Parses JSON arguments, calls the correct handler, and yields the result.
         """
         logger.info("Dispatching function call: %s", function_name)
+        print(f"Dispatching function call: {function_name}")
 
         handler = self.function_handlers.get(function_name)
         if handler is None:
@@ -236,6 +237,7 @@ class FunctionRegistry:
         try:
             logger.debug("Executing handler '%s' with args: %s", function_name, args)
             result: Any = handler(self.llm_client, args)
+            print(f"Result: {result}")
         except Exception as exc:
             msg = f"❌ Error executing function '{function_name}': {exc}"
             logger.exception(msg)
