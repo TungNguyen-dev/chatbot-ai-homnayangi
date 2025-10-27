@@ -6,8 +6,6 @@ from typing import TYPE_CHECKING
 
 import streamlit as st
 
-from src.utils.tts import text_to_speech
-
 if TYPE_CHECKING:
     from src.core.chat_manager import ChatManager
 

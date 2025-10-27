@@ -1,5 +1,6 @@
 from datetime import datetime
 
+
 def get_meal_time_from_hour():
     """
     Xác định phần của ngày (bữa ăn) dựa trên giờ hiện tại.

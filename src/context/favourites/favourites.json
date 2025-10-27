@@ -3,18 +3,28 @@
     "id": "1",
     "name": "Bún bò Huế",
     "desc": "Món nước cay đậm, hương sả, đặc trưng miền Trung",
-    "tags": ["cay", "món nước"]
+    "tags": [
+      "cay",
+      "món nước"
+    ]
   },
   {
     "id": "2",
     "name": "Phở bò",
     "desc": "Món nước thanh, nhẹ, không cay, thích hợp buổi sáng",
-    "tags": ["món nước", "nhẹ"]
+    "tags": [
+      "món nước",
+      "nhẹ"
+    ]
   },
   {
     "id": "3",
     "name": "Lẩu Thái",
     "desc": "Món lẩu cay chua, hải sản, đậm đà",
-    "tags": ["cay", "chua", "món nước"]
+    "tags": [
+      "cay",
+      "chua",
+      "món nước"
+    ]
   }
 ]

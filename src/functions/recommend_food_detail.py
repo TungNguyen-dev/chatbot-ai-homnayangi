@@ -1,6 +1,8 @@
 import json
 import logging
+
 import langdetect  # pip install langdetect
+
 logger = logging.getLogger(__name__)
 DEFINITION = {
     "type": "function",
@@ -39,6 +41,7 @@ DEFINITION = {
     },
 }
 
+
 def detect_language(text: str) -> str:
     """Tự động phát hiện ngôn ngữ người dùng."""
     try:
@@ -46,6 +49,7 @@ def detect_language(text: str) -> str:
         return "vi" if lang == "vi" else "en"
     except Exception:
         return "vi"  # fallback mặc định là tiếng Việt
+
 
 def handle(llm_client, args: dict, user_input: str = "") -> str:
     """

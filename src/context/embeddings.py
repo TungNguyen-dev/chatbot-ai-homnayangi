@@ -1,8 +1,10 @@
-from typing import List, Optional
-import os
 import json
+import os
+from typing import List, Optional
+
 import chromadb
 from openai import OpenAI
+
 from src.config.settings import settings
 
 
@@ -69,7 +71,7 @@ class EmbeddingsManager:
         print("✅ Đã preload dữ liệu món ăn vào vector DB.")
 
     def add_text(
-        self, text: str, metadata: Optional[dict] = None, doc_id: Optional[str] = None
+            self, text: str, metadata: Optional[dict] = None, doc_id: Optional[str] = None
     ):
         """Add text to the vector database."""
         if not self.enabled or not self.collection:

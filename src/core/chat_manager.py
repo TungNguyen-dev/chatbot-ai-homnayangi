@@ -49,8 +49,8 @@ class ChatManager:
         context_info = ""
         if similar_items:
             context_info = (
-                "Dưới đây là một vài món ăn bạn có thể cân nhắc (ưu tiên theo sở thích của người dùng):\n"
-                + "\n".join(f"- {item}" for item in similar_items)
+                    "Dưới đây là một vài món ăn bạn có thể cân nhắc (ưu tiên theo sở thích của người dùng):\n"
+                    + "\n".join(f"- {item}" for item in similar_items)
             )
         print(context_info)
 
