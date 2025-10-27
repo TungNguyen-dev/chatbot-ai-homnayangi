@@ -30,6 +30,9 @@ class Settings:
         self.OPENAI_TEMPERATURE = float(os.getenv("OPENAI_TEMPERATURE", "0.7"))
         self.OPENAI_MAX_TOKENS = int(os.getenv("OPENAI_MAX_TOKENS", "2000"))
 
+        self.OPENAI_EMBEDDING_BASE_URL = os.getenv("OPENAI_EMBEDDING_BASE_URL")
+        self.OPENAI_EMBEDDING_API_KEY = os.getenv("OPENAI_EMBEDDING_API_KEY")
+
         # Application Configuration
         self.APP_TITLE = "Hôm nay ăn gì?"
         self.APP_ICON = "🤖"
