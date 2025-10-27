@@ -12,6 +12,8 @@ import pkgutil
 from types import ModuleType
 from typing import Dict, Generator, Optional, Any, List, Callable, Iterable
 
+from src.utils.detect_user_type import detect_user_type
+
 logger = logging.getLogger(__name__)
 
 
@@ -26,6 +28,8 @@ class FunctionRegistry:
     LEGACY_PACKAGE = "src.core.functions"
 
     def __init__(self, llm_client: Any) -> None:
+        self.raw_user_message = None
+        self.messages = None
         self.llm_client = llm_client
         self.function_handlers: Dict[str, Callable[[Any, dict], str]] = {}
         self.tool_definitions: List[dict] = []
@@ -136,7 +140,7 @@ class FunctionRegistry:
     # Stream Handler
     # --------------------------------------------------------
 
-    def handle_stream(self, stream) -> Generator[str, None, None]:
+    def handle_stream(self, stream, messages: list) -> Generator[str, None, None]:
         """
         Parse stream chunks and handle both text and function calls.
 
@@ -146,11 +150,14 @@ class FunctionRegistry:
         buffer_parts: List[str] = []
         function_name: Optional[str] = None
 
+        self.messages = messages
+
         for chunk in stream:
             delta = chunk.choices[0].delta
 
             # Yield normal content chunks immediately
             if getattr(delta, "content", None):
+                self.raw_user_message = delta.content
                 yield delta.content
                 continue
 
@@ -234,6 +241,22 @@ class FunctionRegistry:
             yield msg
             return
 
+        if function_name == "recommend_food" and "user_type" not in args:
+            raw_message = self.raw_user_message or self.extract_raw_message()
+            print(f"raw_message: {raw_message}")
+            if not raw_message:
+                yield "⚠️ Cannot detect user_type: missing raw message."
+                return
+
+            try:
+                args["message"] = raw_message
+                user_type = detect_user_type(self.llm_client, args)
+                args["user_type"] = user_type.strip().lower()
+                logger.info("Auto-detected user_type: %s", user_type)
+            except Exception as exc:
+                yield f"❌ Failed to detect user_type: {exc}"
+                return
+
         try:
             logger.debug("Executing handler '%s' with args: %s", function_name, args)
             result: Any = handler(self.llm_client, args)
@@ -254,3 +277,15 @@ class FunctionRegistry:
                 yield str(chunk)
         else:
             yield str(result)
+
+    def extract_raw_message(self) -> Optional[str]:
+        """
+        Extract the most recent user message from the stored conversation history.
+        """
+        try:
+            for msg in reversed(self.messages):
+                if msg.get("role") == "user" and msg.get("content"):
+                    return msg["content"]
+        except Exception as e:
+            logger.warning(f"Failed to extract raw message: {e}")
+        return None
