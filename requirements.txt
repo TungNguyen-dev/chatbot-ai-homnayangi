@@ -30,3 +30,6 @@ sentence-transformers >= 2.3.0
 # 🎧 Audio Processing
 ############################################################
 soundfile >= 0.13.1
+
+langdetect
+
