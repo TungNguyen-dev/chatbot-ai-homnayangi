@@ -3,6 +3,7 @@ Chat UI components for rendering messages and handling interactions.
 """
 
 from typing import TYPE_CHECKING
+from src.utils.stt_manager import STTManager
 
 import streamlit as st
 
@@ -48,6 +49,28 @@ def render_chat_interface(chat_manager: "ChatManager"):
 
         # Add assistant response to UI
         st.session_state.messages.append({"role": "assistant", "content": response})
+    
+    # Sppeech-to-text input
+    if st.button("🎙️ Nói bằng giọng nói"):
+        with st.spinner("Đang nghe..."):
+            spoken_text = STTManager.transcribe_from_mic(duration=0)
+        if spoken_text:
+            st.session_state.messages.append({"role": "user", "content": spoken_text})
+            with st.chat_message("user"):
+                st.markdown(spoken_text)
+
+            # Chatbot trả lời
+            with st.chat_message("assistant"):
+                message_placeholder = st.empty()
+                full_response = ""
+                for chunk in chat_manager.send_message(spoken_text, stream=True):
+                    full_response += chunk
+                    message_placeholder.markdown(full_response + "▌")
+                message_placeholder.markdown(full_response)
+
+            st.session_state.messages.append(
+                {"role": "assistant", "content": full_response}
+            )
 
 
 def render_message(role: str, content: str):
