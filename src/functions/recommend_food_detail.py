@@ -1,5 +1,6 @@
 import json
 import logging
+import re
 
 import langdetect  # pip install langdetect
 
@@ -82,8 +83,13 @@ def handle(llm_client, args: dict, user_input: str = "") -> str:
             messages=[{"role": "user", "content": prompt}],
         )
         raw_content = response.choices[0].message.content
+        cleaned = re.sub(r"^```(json)?", "", raw_content.strip())
+        cleaned = re.sub(r"```$", "", cleaned).strip()
+        match = re.search(r"(\[.*\]|\{.*\})", cleaned, re.DOTALL)
+        if match:
+            cleaned = match.group(1)
         try:
-            data = json.loads(raw_content)
+            data = json.loads(cleaned)
         except json.JSONDecodeError:
             logger.warning("⚠️ GPT trả JSON không hợp lệ. Dùng raw text.")
             data = None
