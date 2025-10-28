@@ -43,24 +43,11 @@ def render_chat_interface(chat_manager: "ChatManager"):
 
         # Generate and display assistant response
         with st.chat_message("assistant"):
-            message_placeholder = st.empty()
-            full_response = ""
-
-            # Stream the response
-            for chunk in chat_manager.send_message(prompt, stream=True):
-                full_response += chunk
-                message_placeholder.markdown(full_response + "▌")
-
-            message_placeholder.markdown(full_response)
-
-            # if full_response.strip():
-            #     audio_file = text_to_speech(full_response)
-            #     st.audio(audio_file, format="audio/wav")
+            stream = chat_manager.send_message(prompt, stream=True)
+            response = st.write_stream(stream)
 
         # Add assistant response to UI
-        st.session_state.messages.append(
-            {"role": "assistant", "content": full_response}
-        )
+        st.session_state.messages.append({"role": "assistant", "content": response})
 
 
 def render_message(role: str, content: str):
