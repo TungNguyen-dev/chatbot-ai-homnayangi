@@ -72,11 +72,11 @@ def handle(llm_client, args: dict, user_input: str = "") -> str:
      {{
        "ten_mon": "Tên món ăn",
        "thanh_phan_chinh": "Nguyên liệu chính",
-       "cach_che_bien": "Mô tả ngắn gọn cách chế biến (1-2 câu)",
+       "cach_che_bien": "Mô tả ngắn gọn cách chế biến (2-3 câu)",
        "ly_do_phu_hop": "Lý do vì sao món ăn này phù hợp với hương vị {taste}"
      }}
    ]
-   Mỗi món <= 50 từ. Ngôn ngữ: {"Tiếng Việt" if user_lang == "vi" else "Tiếng Anh"}.
+   Mỗi món <= 100 từ. Ngôn ngữ: {"Tiếng Việt" if user_lang == "vi" else "Tiếng Anh"}.
    """
     try:
         response = llm_client._chat_completion(
@@ -94,13 +94,22 @@ def handle(llm_client, args: dict, user_input: str = "") -> str:
             logger.warning("⚠️ GPT trả JSON không hợp lệ. Dùng raw text.")
             data = None
         if data and isinstance(data, list):
-            formatted = "\n\n".join([
-                f"🍽️ **{item.get('ten_mon', 'Món ăn')}**\n"
-                f"• Thành phần chính: {item.get('thanh_phan_chinh', '')}\n"
-                f"• Cách chế biến: {item.get('cach_che_bien', '')}\n"
-                f"• Lý do phù hợp: {item.get('ly_do_phu_hop', '')}"
-                for item in data
-            ])
+            formatted_items = []
+            for idx, item in enumerate(data, start=1):
+                ten_mon = item.get("ten_mon", "Món ăn")
+                thanh_phan = item.get("thanh_phan_chinh", "")
+                cach_che_bien = item.get("cach_che_bien", "")
+                ly_do = item.get("ly_do_phu_hop", "")
+
+                formatted_items.append(
+                    f"🍽️ **{idx}. {ten_mon}**  \n"
+                    f"   🥕 *Thành phần chính:* {thanh_phan}  \n"
+                    f"   🔥 *Cách chế biến:* {cach_che_bien}  \n"
+                    f"   💡 *Lý do phù hợp:* {ly_do}"
+                )
+
+            formatted = "  \n\n" + "  \n\n".join(formatted_items) + "  \n"
+
         else:
             formatted = raw_content
         # Nếu người dùng nói tiếng Anh → dịch kết quả sang tiếng Anh
