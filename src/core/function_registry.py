@@ -12,8 +12,6 @@ import pkgutil
 from types import ModuleType
 from typing import Dict, Generator, Optional, Any, List, Callable, Iterable
 
-from src.utils.detect_user_type import detect_user_type
-
 logger = logging.getLogger(__name__)
 
 
@@ -240,22 +238,6 @@ class FunctionRegistry:
             logger.error(msg)
             yield msg
             return
-
-        if function_name == "recommend_food" and "user_type" not in args:
-            raw_message = self.raw_user_message or self.extract_raw_message()
-            print(f"raw_message: {raw_message}")
-            if not raw_message:
-                yield "⚠️ Cannot detect user_type: missing raw message."
-                return
-
-            try:
-                args["message"] = raw_message
-                user_type = detect_user_type(self.llm_client, args)
-                args["user_type"] = user_type.strip().lower()
-                logger.info("Auto-detected user_type: %s", user_type)
-            except Exception as exc:
-                yield f"❌ Failed to detect user_type: {exc}"
-                return
 
         try:
             logger.debug("Executing handler '%s' with args: %s", function_name, args)
