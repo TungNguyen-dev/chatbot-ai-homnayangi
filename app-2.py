@@ -31,9 +31,8 @@ def handle_prompt(prompt: str):
         # Serving type: personal | family | none
         serving_type = detect_user_type(LLMClient(), {"message": st.session_state.messages})
         prompt_template += "\n- Serving type: " + serving_type
-        if serving_type == "none":
-            # TODO: Required
-            st.session_state.messages.append({"role": "assistant", "content": "Person unknow"})
+        if serving_type == "unknown":
+            return "Bạn muốn chuẩn bị bữa ăn cho cá nhân hay gia đình?"
 
         # Extract ingredients from the user input
         ingredients = detect_ingredients(st.session_state.messages)
@@ -66,6 +65,7 @@ if prompt := st.chat_input("What is up?"):
 
     with st.chat_message("assistant"):
         response = handle_prompt(prompt)
+        st.markdown(response)
 
     st.session_state.messages.append({"role": "assistant", "content": response})
 
@@ -81,5 +81,6 @@ if st.button("🎙️ Nói bằng giọng nói"):
         # Chatbot trả lời
         with st.chat_message("assistant"):
             response = handle_prompt(spoken_text)
+            st.markdown(response)
 
         st.session_state.messages.append({"role": "assistant", "content": response})
