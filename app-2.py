@@ -34,28 +34,58 @@ def handle_prompt(prompt: str):
     return st.write_stream(llm_client.generate_response_stream(st.session_state.messages))
 
 
+# --- CSS ghim mic xuống dưới ---
+st.markdown("""
+    <style>
+    div[data-testid="stHorizontalBlock"] {
+        position: fixed !important;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 70%; /* 👈 chỉnh độ rộng cụm chat, ví dụ 70% */
+        max-width: 800px; /* 👈 không vượt quá 800px */
+        background-color: white;
+        padding: 0.5rem 1rem 1rem 1rem;
+        box-shadow: 0 -2px 8px rgba(0,0,0,0.1);
+        border-radius: 12px 12px 0 0;
+        z-index: 9999;
+    }
+    </style>
+""", unsafe_allow_html=True)
+
+
+# --- Ô nhập text và nút mic cùng hàng ---
+col1, col2 = st.columns([9, 1])
+with col1:
+    prompt = st.chat_input("What is up?")
+with col2:
+    mic_clicked = st.button("🎙️", help="Nói bằng giọng nói", use_container_width=True)
+
+
 # Normal
-if prompt := st.chat_input("What is up?"):
-    st.session_state.messages.append({"role": "user", "content": prompt})
-    with st.chat_message("user"):
-        st.markdown(prompt)
-
-    with st.chat_message("assistant"):
-        response = handle_prompt(prompt)
-
-    st.session_state.messages.append({"role": "assistant", "content": response})
-
-# Speech-to-text input
-if st.button("🎙️ Nói bằng giọng nói"):
-    with st.spinner("Đang nghe..."):
+if mic_clicked:
+    with st.spinner("🎧 Đang nghe..."):
         spoken_text = STTManager.transcribe_from_mic(duration=0)
     if spoken_text:
         st.session_state.messages.append({"role": "user", "content": spoken_text})
         with st.chat_message("user"):
             st.markdown(spoken_text)
 
-        # Chatbot trả lời
         with st.chat_message("assistant"):
             response = handle_prompt(spoken_text)
+            st.markdown(response)
 
         st.session_state.messages.append({"role": "assistant", "content": response})
+
+
+# --- Khi người dùng nhập text ---
+if prompt:
+    st.session_state.messages.append({"role": "user", "content": prompt})
+    with st.chat_message("user"):
+        st.markdown(prompt)
+
+    with st.chat_message("assistant"):
+        response = handle_prompt(prompt)
+        st.markdown(response)
+
+    st.session_state.messages.append({"role": "assistant", "content": response})
