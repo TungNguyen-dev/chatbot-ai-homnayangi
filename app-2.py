@@ -33,7 +33,6 @@ if prompt := st.chat_input("What is up?"):
 
     with st.chat_message("assistant"):
         response = handle_prompt(prompt)
-        st.markdown(response)
 
     st.session_state.messages.append({"role": "assistant", "content": response})
 
@@ -49,6 +48,5 @@ if st.button("🎙️ Nói bằng giọng nói"):
         # Chatbot trả lời
         with st.chat_message("assistant"):
             response = handle_prompt(spoken_text)
-            st.markdown(response)
 
         st.session_state.messages.append({"role": "assistant", "content": response})
