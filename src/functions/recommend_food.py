@@ -2,6 +2,7 @@ import streamlit as st
 from openai import OpenAI
 
 from src.config.settings import settings
+from src.core.prompt_builder import PromptBuilder
 from src.utils.detect_ingredients import detect_ingredients
 from src.utils.detect_user_type import detect_user_type
 from src.utils.get_meal_time import get_meal_time_from_hour
@@ -72,11 +73,16 @@ def handle(llm_client, args: dict):
         if meal_type:
             prompt_parts.append(f"- Meal type: {meal_type}")
 
+        # Predefined prompt
+        prompt_builder = PromptBuilder()
+        sys_prompt = prompt_builder.build_system_message()
+        prompt_parts.append(f"- Predefined prompt: {sys_prompt}")
+        
+        # History chat
+        prompt_parts.append(f"- History chat: {st.session_state.messages}")
+
         # Combine all parts into a final system prompt
         system_prompt = "\n".join(prompt_parts)
-
-        # Append the constructed prompt to system messages
-        st.session_state.messages.append({"role": "system", "content": system_prompt})
 
         # === 3. Initialize LLM client ===
         client = OpenAI(
@@ -87,12 +93,13 @@ def handle(llm_client, args: dict):
         # === 4. Stream model response ===
         stream = client.chat.completions.create(
             model=settings.OPENAI_MODEL,
-            messages=st.session_state.messages,
+            messages=[{"role": "user", "content": system_prompt}],
             temperature=settings.OPENAI_TEMPERATURE,
             max_completion_tokens=settings.OPENAI_MAX_TOKENS,
             stream=True,
         )
-        return stream
+        
+        return st.write_stream(stream)
 
     except Exception as e:
         # Handle unexpected runtime issues gracefully

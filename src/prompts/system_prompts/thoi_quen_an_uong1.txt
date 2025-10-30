@@ -1,0 +1,16 @@
+---------------------------
+
+Sở thích ăn uống của từng người dùng :
+
+	1. Với người dùng là cá nhân
+		- Buổi sáng thích ăn những món thuộc nhóm món nước
+		- Buổi trưa và tối ưu tiên món ăn no lâu
+		- Thích món nước vị thanh, ít dầu mỡ, ăn nhanh để đi làm kịp giờ
+		- Ghét ăn bánh
+
+	2. Với người dùng là gia đình
+		- Thói quen sáng: xen kẽ tinh bột và chất đạm, ưu tiên món con nhỏ dễ nuốt.
+		- Thói quen trưa: thích cơm nhà, nấu vừa vị cho trẻ nhỏ, hạn chế dầu mỡ.
+		- Thói quen tối: ăn thanh đạm, ít mỡ, ưu tiên món dễ tiêu, tránh thức khuya.
+
+	

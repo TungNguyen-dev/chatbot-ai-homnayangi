@@ -17,8 +17,10 @@ class PromptBuilder:
         """Load and combine system prompts."""
         chatbot_role = load_prompt("system_prompts/chatbot_role.txt")
         persona = load_prompt("system_prompts/persona.txt")
+        nhat_ky_an_uong = load_prompt("system_prompts/nhat_ky_an_uong1.txt")
+        thoi_quen_an_uong = load_prompt("system_prompts/thoi_quen_an_uong1.txt")
 
-        return f"{chatbot_role}\n\n{persona}"
+        return f"{chatbot_role}\n\n{persona}\n\n{nhat_ky_an_uong}\n\n{thoi_quen_an_uong}"
 
     def build_system_message(
             self, additional_context: Optional[str] = None
@@ -36,6 +38,8 @@ class PromptBuilder:
 
         if additional_context:
             content = f"{content}\n\nAdditional Context:\n{additional_context}"
+
+        print(content)
 
         return {"role": "system", "content": content}
 
