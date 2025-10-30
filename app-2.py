@@ -5,7 +5,16 @@ from src.config.settings import settings
 from src.core.llm_client import LLMClient
 from src.utils.stt_manager import STTManager
 
-st.title("Hôm nay ăn gì?")
+from src.ui.layout import setup_page_config, render_sidebar, render_header
+# st.title("Hôm nay ăn gì?")
+# --- "Clear Conversation" ---
+setup_page_config()
+
+# 2. Render Sidebar và Header (giống app.py)
+# Sidebar chứa nút "Clear Conversation"
+render_sidebar()
+# Header sẽ hiển thị tiêu đề chính của ứng dụng
+render_header()
 
 client = OpenAI(
     base_url=settings.OPENAI_BASE_URL,
