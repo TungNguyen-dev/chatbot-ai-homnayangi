@@ -49,7 +49,7 @@ class ChatManager:
         context_info = ""
         if similar_items:
             context_info = (
-                    "Dưới đây là một vài món ăn bạn có thể cân nhắc (ưu tiên theo sở thích của người dùng):\n"
+                    "Thông tin tham khảo được truy xuất từ cơ sở dữ liệu (có thể hữu ích cho câu hỏi):\n\n"
                     + "\n".join(f"- {item}" for item in similar_items)
             )
         print(context_info)
@@ -57,9 +57,23 @@ class ChatManager:
         # Build messages for LLM
         messages = self.prompt_builder.build_messages(self.memory.get_messages())
 
-        # Thêm 1 tin nhắn “system” mới chứa gợi ý món ăn gần nhất
+        # 5️⃣ Chèn system message chứa context (ưu tiên ngay sau system đầu tiên)
         if context_info:
-            messages.insert(1, {"role": "system", "content": context_info})
+            # Tạo prompt rõ ràng cho LLM biết cách dùng context
+            rag_prompt = {
+                "role": "system",
+                "content": (
+                    "Bạn là trợ lý AI chuyên tư vấn về ẩm thực. "
+                    "Hãy sử dụng thông tin dưới đây để giúp trả lời câu hỏi người dùng nếu phù hợp.\n\n"
+                    f"{context_info}"
+                ),
+            }
+
+            # Chèn vào sau message system đầu tiên
+            if messages and messages[0]["role"] == "system":
+                messages.insert(1, rag_prompt)
+            else:
+                messages.insert(0, rag_prompt)
 
         # ✅ Explicitly cast to maintain type safety
         typed_messages = cast(list[ChatCompletionMessageParam], cast(object, messages))

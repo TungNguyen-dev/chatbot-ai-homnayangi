@@ -3,28 +3,120 @@
     "id": "1",
     "name": "Bún bò Huế",
     "desc": "Món nước cay đậm, hương sả, đặc trưng miền Trung",
-    "tags": [
-      "cay",
-      "món nước"
-    ]
+    "tags": ["cay", "món nước"]
   },
   {
     "id": "2",
-    "name": "Phở bò",
-    "desc": "Món nước thanh, nhẹ, không cay, thích hợp buổi sáng",
-    "tags": [
-      "món nước",
-      "nhẹ"
-    ]
+    "name": "Lẩu Thái",
+    "desc": "Món lẩu cay chua, hải sản, đậm đà hương vị chanh sả",
+    "tags": ["cay", "chua", "món nước"]
   },
   {
     "id": "3",
-    "name": "Lẩu Thái",
-    "desc": "Món lẩu cay chua, hải sản, đậm đà",
-    "tags": [
-      "cay",
-      "chua",
-      "món nước"
-    ]
+    "name": "Canh chua cá lóc",
+    "desc": "Canh chua truyền thống Nam Bộ, vị ngọt cá và chua thanh của me",
+    "tags": ["chua", "món nước"]
+  },
+  {
+    "id": "4",
+    "name": "Bún mắm",
+    "desc": "Món bún đậm đà vị mắm, cay nhẹ, đặc sản miền Tây",
+    "tags": ["cay", "món nước"]
+  },
+  {
+    "id": "5",
+    "name": "Gỏi đu đủ bò khô",
+    "desc": "Món gỏi cay chua, giòn, trộn bò khô và đu đủ xanh",
+    "tags": ["cay", "chua", "khô"]
+  },
+  {
+    "id": "6",
+    "name": "Ốc xào sả ớt",
+    "desc": "Món ốc xào cay nồng với sả và ớt, rất bắt vị",
+    "tags": ["cay", "mặn"]
+  },
+  {
+    "id": "7",
+    "name": "Bánh canh cá lóc",
+    "desc": "Bánh canh nóng hổi, nước dùng cay nhẹ, thịt cá dai ngon",
+    "tags": ["cay", "món nước"]
+  },
+  {
+    "id": "8",
+    "name": "Gỏi xoài tôm khô",
+    "desc": "Gỏi chua cay giòn sần sật, vị chua của xoài xanh và cay của ớt",
+    "tags": ["chua", "cay", "khô"]
+  },
+  {
+    "id": "9",
+    "name": "Bún riêu cua",
+    "desc": "Món nước chua nhẹ từ cà chua và me, thêm chút cay từ sa tế",
+    "tags": ["chua", "cay", "món nước"]
+  },
+  {
+    "id": "10",
+    "name": "Lẩu mắm",
+    "desc": "Lẩu đậm vị mắm, cay thơm, ăn cùng nhiều loại rau đồng quê",
+    "tags": ["cay", "món nước"]
+  },
+  {
+    "id": "11",
+    "name": "Bún Thái hải sản",
+    "desc": "Bún nước cay chua kiểu Thái, đậm đà vị chanh, sả, ớt",
+    "tags": ["cay", "chua", "món nước"]
+  },
+  {
+    "id": "12",
+    "name": "Cá nướng mắm ớt",
+    "desc": "Cá nướng than, quét mắm ớt cay mặn, thơm nồng",
+    "tags": ["cay", "mặn"]
+  },
+  {
+    "id": "13",
+    "name": "Bánh tráng trộn",
+    "desc": "Món ăn vặt cay chua, có xoài xanh, bò khô và sa tế",
+    "tags": ["cay", "chua", "ăn vặt"]
+  },
+  {
+    "id": "14",
+    "name": "Cá kho tộ cay",
+    "desc": "Cá kho nước màu đậm, vị cay nhẹ của ớt và tiêu",
+    "tags": ["cay", "kho"]
+  },
+  {
+    "id": "15",
+    "name": "Canh chua tôm",
+    "desc": "Canh chua thanh mát với tôm tươi, vị me chua nhẹ và cay dịu",
+    "tags": ["chua", "cay", "món nước"]
+  },
+  {
+    "id": "16",
+    "name": "Bún ốc cay",
+    "desc": "Bún ốc Hà Nội thêm ớt chưng cay nồng, vị chua từ giấm bỗng",
+    "tags": ["cay", "chua", "món nước"]
+  },
+  {
+    "id": "17",
+    "name": "Gà xào sả ớt",
+    "desc": "Thịt gà xào cay thơm mùi sả, ăn cùng cơm nóng rất đưa cơm",
+    "tags": ["cay", "xào"]
+  },
+  {
+    "id": "18",
+    "name": "Nộm sứa chua cay",
+    "desc": "Món nộm mát lạnh, vị chua ngọt cay dịu, giòn sần sật",
+    "tags": ["chua", "cay", "gỏi"]
+  },
+  {
+    "id": "19",
+    "name": "Bạch tuộc nướng sa tế",
+    "desc": "Bạch tuộc nướng thơm phức, cay nồng vị sa tế ớt",
+    "tags": ["cay", "nướng"]
+  },
+  {
+    "id": "20",
+    "name": "Lẩu cá kèo lá giang",
+    "desc": "Lẩu chua thanh lá giang, cay nhẹ, hương vị miền Tây",
+    "tags": ["chua", "cay", "món nước"]
   }
 ]

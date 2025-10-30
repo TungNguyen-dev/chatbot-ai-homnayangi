@@ -39,6 +39,19 @@ class EmbeddingsManager:
 
     def _load_initial_data(self):
         """Load initial food data into vector DB."""
+        if not self.collection:
+            print("⚠️ Chưa khởi tạo collection, bỏ qua preload.")
+            return
+
+        existing_count = 0
+        try:
+            existing_count = self.collection.count()
+        except Exception as e:
+            print(f"⚠️ Không thể đếm dữ liệu trong collection: {e}")
+
+        if existing_count > 0:
+            print(f"✅ Collection đã có sẵn {existing_count} vectors, bỏ qua preload.")
+            return
         print("🧠 Đang nạp dữ liệu món ăn mặc định...")
 
         base_dir = os.path.dirname(os.path.abspath(__file__))
