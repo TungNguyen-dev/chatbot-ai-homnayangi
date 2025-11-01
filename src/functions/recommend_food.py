@@ -36,13 +36,6 @@ DEFINITION = {
                         "meal_type": "evening"
                     },
                 },
-                "example_output": {
-                    "recommendation": (
-                        "**Gợi ý món ăn:** Lẩu bò hoặc bò xào rau cải\n"
-                        "**Lý do đề xuất:** Phù hợp cho bữa tối gia đình, dễ nấu và đầy đủ dinh dưỡng.\n"
-                        "**Cách chuẩn bị:** Dùng thịt bò thái mỏng, nấu với rau cải hoặc xào cùng hành tỏi."
-                    )
-                },
             },
         ],
     },
@@ -71,22 +64,26 @@ def handle(llm_client, args: dict):
         predefined_prompt = prompt_builder.build_system_message()
 
         system_intro = (
-            "You are a culinary assistant AI specializing in Vietnamese cuisine. "
-            "Your task is to recommend dishes that are delicious, practical, "
-            "and suitable for the user's situation.\n\n"
-            "Always consider:\n"
-            "- Who will eat (personal or family)\n"
-            "- Mentioned or available ingredients\n"
-            "- The current meal time (breakfast, lunch, dinner)\n\n"
-            "If information is missing, politely ask for clarification "
-            "instead of making assumptions.\n\n"
+            "Bạn là trợ lý ẩm thực AI chuyên gợi ý món ăn Việt Nam ngon miệng, dễ làm và phù hợp với hoàn cảnh người dùng.\n\n"
+            "🎯 Luôn cân nhắc:\n"
+            "- 👥 Ai sẽ ăn (cá nhân hay gia đình)\n"
+            "- 🥬 Nguyên liệu có sẵn hoặc được đề cập\n"
+            "- 🕒 Thời điểm trong ngày (sáng, trưa, tối)\n\n"
+            "❗ Nếu thiếu thông tin, hãy hỏi lại người dùng một cách lịch sự thay vì đoán.\n\n"
             "---\n"
-            "### 📋 RESPONSE FORMAT (output in Vietnamese)\n"
-            "Always respond using the following structure:\n\n"
-            "**Gợi ý món ăn:** <tên món chính hoặc thực đơn>\n"
-            "**Lý do đề xuất:** <vì sao món này phù hợp>\n"
-            "**Cách chuẩn bị (nếu cần):** <gợi ý sơ lược về cách chế biến hoặc nguyên liệu bổ sung>\n\n"
-            "If there are multiple suitable dishes, list up to 3 options using bullet points."
+            "### 🍽️ ĐỊNH DẠNG TRẢ LỜI (bằng tiếng Việt)\n"
+            "Luôn trả lời theo cấu trúc sau, có biểu tượng minh họa và giọng văn hấp dẫn:\n\n"
+            "🌟 **Gợi ý món ăn hôm nay:**\n"
+            "- 🍲 <Tên món 1>\n"
+            "- 🍛 <Tên món 2>\n"
+            "- 🍜 <Tên món 3>\n\n"
+            "💡 **Lý do chọn món:** <Giải thích vì sao món này phù hợp với hoàn cảnh người dùng>\n\n"
+            "👨‍🍳 **Cách chuẩn bị:** <Hướng dẫn sơ lược cách chế biến hoặc nguyên liệu cần thêm>\n\n"
+            "- 🍲 <Cách chế biến món 1>\n"
+            "- 🍛 <Cách chế biến món 2>\n"
+            "- 🍜 <Cách chế biến món 3>\n\n"
+            "📌 Nếu món ăn có thể mua sẵn, hãy gợi ý địa điểm hoặc cách chọn nhanh.\n"
+            "📌 Nếu món ăn phù hợp với thời tiết, tâm trạng, hoặc dịp đặc biệt, hãy nêu rõ."
         )
 
         messages.append({
