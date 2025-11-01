@@ -134,7 +134,6 @@ def handle(llm_client, args: dict):
                     "Thông tin tham khảo được truy xuất từ cơ sở dữ liệu (có thể hữu ích cho câu hỏi):\n\n"
                     + "\n".join(f"- {item}" for item in similar_items)
             )
-        print(context_info)
 
         if context_info:
             # Tạo prompt rõ ràng cho LLM biết cách dùng context
@@ -161,7 +160,7 @@ def handle(llm_client, args: dict):
             base_url=settings.OPENAI_BASE_URL,
             api_key=settings.OPENAI_API_KEY,
         )
-
+        print(messages)
         stream = client.chat.completions.create(
             model=settings.OPENAI_MODEL,
             messages=messages,
