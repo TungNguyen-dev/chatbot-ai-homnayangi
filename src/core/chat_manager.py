@@ -38,7 +38,9 @@ class ChatManager:
 
         # Optionally add to vector DB for long-term memory
         if self.embeddings.enabled:
-            self.embeddings.add_text(user_message, metadata={"role": "user"})
+            # Chỉ lưu nếu có "tôi thích", "tôi muốn", hoặc chứa tên món ăn
+            if any(keyword in user_message.lower() for keyword in ["tôi thích", "tôi muốn", "muốn", "thích"]):
+                self.embeddings.add_text(user_message, metadata={"role": "user"})
 
         # 🆕 3️⃣ Truy vấn vector DB xem có món nào phù hợp với câu hỏi hoặc sở thích không
         similar_items = []
