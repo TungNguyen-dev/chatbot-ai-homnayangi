@@ -32,9 +32,9 @@ def render_sidebar():
     with st.sidebar:
         st.title(f"{settings.APP_ICON} {settings.APP_TITLE}")
         st.markdown("---")
-        st.subheader("Controls")
+        st.subheader("")
 
-        if st.button("🗑️ Clear Conversation", use_container_width=True):
+        if st.button("🗑️ Xóa hội thoại", use_container_width=True):
             if "chat_manager" in st.session_state:
                 st.session_state.chat_manager.clear_conversation()
             if "messages" in st.session_state:
@@ -42,7 +42,7 @@ def render_sidebar():
             st.rerun()
 
         st.markdown("---")
-        st.subheader("About")
+        st.subheader("Giới thiệu chung")
         st.markdown("""
         Đây là chatbot AI thông minh giúp bạn gợi ý món ăn phù hợp theo sở thích và ngữ cảnh.
 
@@ -60,5 +60,5 @@ def render_sidebar():
 def render_header():
     """Render the main header."""
     st.title(f"{settings.APP_ICON} {settings.APP_TITLE}")
-    st.markdown("Ask me anything! I'm here to help.")
+    st.markdown("Hỏi tôi bất cứ điều gì bạn muốn! Tôi ở đây là vì bạn..")
     st.markdown("---")
