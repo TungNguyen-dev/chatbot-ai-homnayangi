@@ -22,13 +22,13 @@ def detect_user_type(llm_client, args: dict) -> str:
 
     prompt = (
         "You are a conversation classifier. "
-        "Based on the entire conversation below, determine the main intent of the messages. "
-        "Classify whether the conversation is primarily intended for:\n"
-        "- an individual → respond 'personal'\n"
-        "- a family or group → respond 'family'\n"
-        "- unclear or insufficient context → respond 'unknown'\n\n"
+        "Carefully analyze the entire conversation below and determine who the messages are primarily intended for. "
+        "Classify the intent strictly into one of the following categories:\n"
+        "- 'personal' → clearly intended for one individual person.\n"
+        "- 'family' → clearly intended for a family or group of people.\n"
+        "- 'unknown' → if there is any uncertainty, ambiguity, or insufficient context to confidently choose between 'personal' and 'family'.\n\n"
         "Respond with exactly one word: 'personal', 'family', or 'unknown'. "
-        "Do not include any explanation or punctuation.\n\n"
+        "Do not include any explanation, punctuation, or additional text.\n\n"
         f"Conversation:\n{messages}\n\n"
         "Answer:"
     )

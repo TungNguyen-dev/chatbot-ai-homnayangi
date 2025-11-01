@@ -39,8 +39,6 @@ class PromptBuilder:
         if additional_context:
             content = f"{content}\n\nAdditional Context:\n{additional_context}"
 
-        print(content)
-
         return {"role": "system", "content": content}
 
     def build_messages(

@@ -242,7 +242,6 @@ class FunctionRegistry:
         try:
             logger.debug("Executing handler '%s' with args: %s", function_name, args)
             result: Any = handler(self.llm_client, args)
-            print(f"Result: {result}")
         except Exception as exc:
             msg = f"❌ Error executing function '{function_name}': {exc}"
             logger.exception(msg)
