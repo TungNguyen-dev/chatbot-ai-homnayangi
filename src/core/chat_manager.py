@@ -52,7 +52,6 @@ class ChatManager:
                     "Thông tin tham khảo được truy xuất từ cơ sở dữ liệu (có thể hữu ích cho câu hỏi):\n\n"
                     + "\n".join(f"- {item}" for item in similar_items)
             )
-        print(context_info)
 
         # Build messages for LLM
         messages = self.prompt_builder.build_messages(self.memory.get_messages())
