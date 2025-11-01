@@ -118,23 +118,40 @@ def handle(llm_client, args: dict):
         context_info = ""
         embeddings = EmbeddingsManager()
         if embeddings.enabled:
-            embeddings.add_text(user_message, metadata={"role": "user"})
+            # Chỉ lưu nếu có "tôi thích", "tôi muốn", hoặc chứa tên món ăn
+            if any(keyword in user_message.lower() for keyword in ["tôi thích", "tôi muốn", "muốn", "thích"]):
+                embeddings.add_text(user_message, metadata={"role": "user"})
+        
+        # 🆕 3️⃣ Truy vấn vector DB xem có món nào phù hợp với câu hỏi hoặc sở thích không
+        similar_items = []
+        if embeddings.enabled:
             similar_items = embeddings.search_similar(user_message, n_results=3)
-            if similar_items:
-                context_info = (
-                        "Dưới đây là một số món ăn hoặc thông tin tương tự được truy xuất từ cơ sở dữ liệu:\n"
-                        + "\n".join(f"- {item}" for item in similar_items)
-                )
+
+        # 🆕 4️⃣ Nếu có kết quả, tạo đoạn context để AI dùng
+        context_info = ""
+        if similar_items:
+            context_info = (
+                    "Thông tin tham khảo được truy xuất từ cơ sở dữ liệu (có thể hữu ích cho câu hỏi):\n\n"
+                    + "\n".join(f"- {item}" for item in similar_items)
+            )
+        print(context_info)
 
         if context_info:
-            messages.append({
+            # Tạo prompt rõ ràng cho LLM biết cách dùng context
+            rag_prompt = {
                 "role": "system",
                 "content": (
-                    "Bạn có thể tham khảo thông tin sau để cải thiện câu trả lời, "
-                    "nhưng chỉ khi nó thực sự phù hợp với yêu cầu của người dùng.\n\n"
+                    "Bạn là trợ lý AI chuyên tư vấn về ẩm thực. "
+                    "Hãy sử dụng thông tin dưới đây để giúp trả lời câu hỏi người dùng nếu phù hợp.\n\n"
                     f"{context_info}"
                 ),
-            })
+            }
+
+            # Chèn vào sau message system đầu tiên
+            if messages and messages[0]["role"] == "system":
+                messages.insert(1, rag_prompt)
+            else:
+                messages.insert(0, rag_prompt)
 
         # === 7️⃣ Final User Message ===
         messages.append({"role": "user", "content": user_message})
