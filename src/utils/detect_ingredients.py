@@ -40,5 +40,4 @@ def detect_ingredients(messages):
         temperature=settings.OPENAI_TEMPERATURE,
         max_tokens=settings.OPENAI_MAX_TOKENS,
     )
-    print(content)
     return content.choices[0].message.content

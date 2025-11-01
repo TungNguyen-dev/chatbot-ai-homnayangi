@@ -23,7 +23,6 @@ class FunctionRegistry:
     """
 
     PREFERRED_PACKAGE = "src.functions"
-    LEGACY_PACKAGE = "src.core.functions"
 
     def __init__(self, llm_client: Any) -> None:
         self.raw_user_message = None
@@ -98,7 +97,6 @@ class FunctionRegistry:
 
         # Preferred package has higher priority
         load_from_package(self.PREFERRED_PACKAGE, override_existing=True)
-        load_from_package(self.LEGACY_PACKAGE, override_existing=False)
 
         return handlers
 
@@ -121,7 +119,6 @@ class FunctionRegistry:
                     definitions.append(definition)
 
         extract_definitions(self.PREFERRED_PACKAGE)
-        extract_definitions(self.LEGACY_PACKAGE)
 
         return definitions
 
