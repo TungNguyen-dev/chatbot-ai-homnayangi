@@ -18,11 +18,20 @@ def setup_page_config():
 
 
 def render_sidebar():
+    st.markdown(
+        """
+        <style>
+        [data-testid="stSidebar"] > div:first-child {
+            overflow: hidden !important;  /* Đảm bảo không cuộn trong nội dung */
+        }
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
     """Render the sidebar with controls and information."""
     with st.sidebar:
         st.title(f"{settings.APP_ICON} {settings.APP_TITLE}")
         st.markdown("---")
-
         st.subheader("Controls")
 
         if st.button("🗑️ Clear Conversation", use_container_width=True):
@@ -35,16 +44,17 @@ def render_sidebar():
         st.markdown("---")
         st.subheader("About")
         st.markdown("""
-        This is an AI-powered chatbot that can help you with various tasks and questions.
+        Đây là chatbot AI thông minh giúp bạn gợi ý món ăn phù hợp theo sở thích và ngữ cảnh.
 
-        **Features:**
-        - Contextual conversations
-        - Memory of chat history
-        - Helpful and accurate responses
+        **Chức năng:**
+        - Nhận diện giọng nói
+        - Nhận diện ngữ cảnh
+        - Gợi ý món ăn
+        - Lưu lịch sử ăn uống
         """)
 
-        st.markdown("---")
-        st.caption(f"Powered by {settings.APP_ICON}")
+        # st.markdown("---")
+        # st.caption(f"Powered by {settings.APP_ICON}")
 
 
 def render_header():
