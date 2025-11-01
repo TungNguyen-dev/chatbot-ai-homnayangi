@@ -18,57 +18,21 @@ DEFINITION = {
             "bao gồm loại người dùng (cá nhân hoặc gia đình), nguyên liệu sẵn có, "
             "và thời điểm trong ngày. "
             "Hàm này được gọi khi người dùng hỏi về việc nên ăn gì, "
-            "ví dụ: 'Hôm nay ăn gì', 'Tối nay ăn gì', hoặc các câu hỏi tương tự.\n\n"
-            "Quy tắc xác định loại người dùng (serving_type):\n"
-            "- Nếu câu hỏi có nhân xưng cá nhân số ít (tôi, em, anh, chị, bạn, mình...) → serving_type = 'personal'.\n"
-            "- Nếu câu hỏi thể hiện nhóm hoặc gia đình (chúng tôi, nhà tôi, gia đình tôi, cả nhà, vợ chồng tôi...) → serving_type = 'family'.\n"
-            "- Nếu không xác định được rõ ràng, mặc định serving_type = 'personal'."
+            "ví dụ: 'Hôm nay ăn gì', 'Tối nay ăn gì', hoặc các câu hỏi tương tự."
         ),
         "examples": [
             {
                 "user_input": "Tối nay cả nhà ăn gì được?",
                 "detected_context": {
                     "serving_type": "family",
-                    "ingredients": "",
+                    "ingredients": "thịt bò, rau cải",
                     "meal_type": "evening"
                 },
                 "example_call": {
                     "name": "recommend_food",
                     "arguments": {
                         "serving_type": "family",
-                        "ingredients": "",
-                        "meal_type": "evening"
-                    },
-                },
-            },
-            {
-                "user_input": "Hôm nay tôi ăn gì?",
-                "detected_context": {
-                    "serving_type": "personal",
-                    "ingredients": "",
-                    "meal_type": "evening"
-                },
-                "example_call": {
-                    "name": "recommend_food",
-                    "arguments": {
-                        "serving_type": "personal",
-                        "ingredients": "",
-                        "meal_type": "evening"
-                    },
-                },
-            },
-            {
-                "user_input": "Cả nhà tôi có ít trứng với rau, tối nay nấu gì?",
-                "detected_context": {
-                    "serving_type": "family",
-                    "ingredients": "trứng, rau",
-                    "meal_type": "evening"
-                },
-                "example_call": {
-                    "name": "recommend_food",
-                    "arguments": {
-                        "serving_type": "family",
-                        "ingredients": "trứng, rau",
+                        "ingredients": "thịt bò, rau cải",
                         "meal_type": "evening"
                     },
                 },
