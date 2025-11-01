@@ -119,9 +119,10 @@ def handle(llm_client, args: dict):
         embeddings = EmbeddingsManager()
         if embeddings.enabled:
             # Chỉ lưu nếu có "tôi thích", "tôi muốn", hoặc chứa tên món ăn
-            if any(keyword in user_message.lower() for keyword in ["tôi thích", "tôi muốn", "muốn", "thích"]):
+            if any(keyword in user_message.lower() for keyword in
+                   ["tôi thích", "tôi muốn", "muốn", "thích"]):
                 embeddings.add_text(user_message, metadata={"role": "user"})
-        
+
         # 🆕 3️⃣ Truy vấn vector DB xem có món nào phù hợp với câu hỏi hoặc sở thích không
         similar_items = []
         if embeddings.enabled:
@@ -160,7 +161,7 @@ def handle(llm_client, args: dict):
             base_url=settings.OPENAI_BASE_URL,
             api_key=settings.OPENAI_API_KEY,
         )
-        print(messages)
+
         stream = client.chat.completions.create(
             model=settings.OPENAI_MODEL,
             messages=messages,

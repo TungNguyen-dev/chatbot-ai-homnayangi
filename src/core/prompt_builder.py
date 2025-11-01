@@ -1,7 +1,7 @@
 """
 Prompt builder that combines system prompts, user prompts, and context.
 """
-
+import os
 from typing import List, Dict, Optional
 
 from src.utils.file_loader import load_prompt
@@ -14,13 +14,55 @@ class PromptBuilder:
         self.system_prompts = self._load_system_prompts()
 
     def _load_system_prompts(self) -> str:
-        """Load and combine system prompts."""
-        chatbot_role = load_prompt("system_prompts/chatbot_role.txt")
-        persona = load_prompt("system_prompts/persona.txt")
-        nhat_ky_an_uong = load_prompt("system_prompts/nhat_ky_an_uong1.txt")
-        thoi_quen_an_uong = load_prompt("system_prompts/thoi_quen_an_uong1.txt")
+        """
+        Load and combine all system prompt files into a single formatted string.
+        Ensures the final result is always a valid string.
+        Automatically skips missing or empty files.
+        """
 
-        return f"{chatbot_role}\n\n{persona}\n\n{nhat_ky_an_uong}\n\n{thoi_quen_an_uong}"
+        prompt_files = [
+            "system_prompts/chatbot_role.txt",
+            "system_prompts/persona.txt",
+            "system_prompts/nhat_ky_an_uong1.txt",
+            "system_prompts/thoi_quen_an_uong1.txt",
+            "system_prompts/vietnamese_dishes_prompt.txt",
+        ]
+
+        sections = []
+
+        for path in prompt_files:
+            try:
+                content = load_prompt(path)
+                # Ensure content is string
+                if not isinstance(content, str):
+                    content = str(content or "")
+                content = content.strip()
+                if content:
+                    section_title = os.path.splitext(os.path.basename(path))[0].replace("_",
+                                                                                        " ").title()
+                    sections.append(f"### {section_title}\n{content}")
+                else:
+                    print(f"[Warning] Empty prompt file skipped: {path}")
+            except FileNotFoundError:
+                print(f"[Warning] Missing prompt file: {path}")
+            except Exception as e:
+                print(f"[Error] Failed to load prompt '{path}': {e}")
+
+        if not sections:
+            raise RuntimeError("No valid system prompts loaded.")
+
+        # Combine all into a single string
+        combined_prompt = "\n\n".join(sections)
+
+        # Final safe return — always a string
+        result = (
+            "# === SYSTEM PROMPT COLLECTION ===\n"
+            "You are provided with multiple context definitions below.\n"
+            "Use them collectively to understand your role, persona, and domain knowledge.\n\n"
+            f"{combined_prompt.strip()}"
+        )
+
+        return str(result)
 
     def build_system_message(
             self, additional_context: Optional[str] = None
